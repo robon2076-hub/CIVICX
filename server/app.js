@@ -197,7 +197,10 @@ function createApp(options = {}) {
       request.authUser = user;
       next();
     } catch (error) {
-      console.error("[CivicX auth] AI session verification failed", { code: error.code || "UNKNOWN" });
+      console.error("[CivicX auth] AI session verification failed", {
+        code: error.code || "UNKNOWN",
+        status: error.status || error.statusCode
+      });
       response.status(503).json(responseBody("Sign-in verification is temporarily unavailable."));
     }
   }
@@ -229,7 +232,14 @@ function createApp(options = {}) {
   }
   app.use(["/vendor/mediapipe", "/vendor/onnxruntime"], (request, response) => response.sendStatus(404));
   app.use("/node_modules", (request, response) => response.sendStatus(404));
-  app.use(express.static(root, { index: "index.html" }));
+  app.use(express.static(root, {
+    index: "index.html",
+    setHeaders(response, filePath) {
+      if (path.resolve(filePath) === path.join(root, "chat.js")) {
+        response.setHeader("Cache-Control", "no-cache, max-age=0, must-revalidate");
+      }
+    }
+  }));
   registerEnvironmentRoutes(app, options.environmentService);
   registerAssistantRoute(app, {
     apiKey,
@@ -604,7 +614,7 @@ function createApp(options = {}) {
   async function handleChat(request, response, body = request.body) {
     try {
       if (!body || typeof body !== "object" || Array.isArray(body) ||
-        Object.keys(body).some((key) => !["message", "history", "image", "mimeType"].includes(key))) {
+        Object.keys(body).some((key) => !["message", "history", "image", "mimeType", "imageAttached"].includes(key))) {
         const error = new TypeError("Send only a message, history, and optional redacted image.");
         error.statusCode = 400;
         throw error;
@@ -615,17 +625,24 @@ function createApp(options = {}) {
         error.statusCode = 400;
         throw error;
       }
+      if (body.imageAttached !== undefined && typeof body.imageAttached !== "boolean") {
+        const error = new TypeError("Image attachment status must be true or false.");
+        error.statusCode = 400;
+        throw error;
+      }
       if (!body.message.trim()) {
         const error = new TypeError("Type a short description of the issue. CivicX AI cannot identify it from a photo alone.");
         error.statusCode = 400;
         throw error;
       }
-      const imageAttached = body.image !== undefined && body.image !== null;
-      const imageWarning = imageAttached
+      const hasImageData = body.image !== undefined && body.image !== null;
+      const imageAttached = body.imageAttached === true || hasImageData;
+      const imageWarning = hasImageData
         ? !isValidChatSupportingImage(body.image, body.mimeType)
         : body.mimeType !== undefined;
       delete body.image;
       delete body.mimeType;
+      delete body.imageAttached;
       const reply = await chat({
         message: body.message,
         history,
@@ -638,7 +655,10 @@ function createApp(options = {}) {
         response.status(400).json({ ok: false, error: error.message });
         return;
       }
-      console.error("[AI chat] Request failed", { code: error.code || "UNKNOWN", status: error.status || error.statusCode });
+      console.error("[AI chat] Request failed", {
+        code: error.code || "UNKNOWN",
+        status: error.status || error.statusCode
+      });
       const status = error.statusCode === 429 ? 429 : error.statusCode === 502 ? 502 : 503;
       response.status(status).json({
         ok: false,
@@ -666,9 +686,15 @@ function createApp(options = {}) {
   app.use((error, request, response, next) => {
     if (request.path === "/api/chat" || request.path === "/api/ai/chat") {
       const tooLarge = error.type === "entity.too.large";
+      console.error("[AI chat] Request parsing failed", {
+        status: tooLarge ? 413 : error.status || error.statusCode || 400,
+        type: ["entity.too.large", "entity.parse.failed", "request.aborted"].includes(error.type)
+          ? error.type
+          : "invalid_request"
+      });
       response.status(tooLarge ? 413 : 400).json({
         ok: false,
-        error: tooLarge ? "The chat request is too large. Attach a smaller photo." : "Send a valid JSON chat request."
+        error: tooLarge ? "The chat request is too large. Start a new chat and try again." : "Send a valid JSON chat request."
       });
       return;
     }

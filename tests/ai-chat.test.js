@@ -47,44 +47,55 @@ function postCurrentChat(server, body) {
   });
 }
 
-function createRegressionApp() {
+function createRegressionApp({ onRequest = () => {}, onModelRequest = () => {} } = {}) {
   return createAuthenticatedApp({
     apiKey: "local-test-key",
     verifyPhotoPrivacy: async () => {},
-    chatWithCivicX: (request, apiKey) => chatWithCivicX(request, apiKey, async (_url, init) => {
-      const payload = JSON.parse(init.body);
-      const hasImage = payload.contents?.some((turn) =>
-        turn.parts?.some((part) => part.inlineData)
-      );
-      if (hasImage) {
+    chatWithCivicX: (request, apiKey) => {
+      onRequest(request);
+      return chatWithCivicX(request, apiKey, async (_url, init) => {
+        onModelRequest();
+        const payload = JSON.parse(init.body);
+        const hasImage = payload.contents?.some((turn) =>
+          turn.parts?.some((part) => part.inlineData)
+        );
+        if (hasImage) {
+          return new Response(JSON.stringify({
+            error: { code: 400, message: "Synthetic image-input rejection for regression testing." }
+          }), { status: 400, headers: { "content-type": "application/json" } });
+        }
         return new Response(JSON.stringify({
-          error: { code: 400, message: "Synthetic image-input rejection for regression testing." }
-        }), { status: 400, headers: { "content-type": "application/json" } });
-      }
-      return new Response(JSON.stringify({
-        candidates: [{ content: { parts: [{ text: "Local text-only reply." }] } }]
-      }), { status: 200, headers: { "content-type": "application/json" } });
-    })
+          candidates: [{ content: { parts: [{ text: "Local text-only reply." }] } }]
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      });
+    }
   });
 }
 
 test("chat classifies image-plus-text civic issues from text without sending the image to the model", async () => {
   const cases = [
-    ["This is garbage, reported near Park Street", "Garbage and Sanitation", "Park Street", REDACTED_TEST_JPEG, "image/jpeg"],
-    ["Pothole reported near College Street", "Road and Infrastructure", "College Street", REDACTED_TEST_PNG, "image/png"],
-    ["Water leakage reported near New Market", "Water and Drainage", "New Market", REDACTED_TEST_JPEG, "image/jpeg"],
-    ["Streetlight is out near Victoria Memorial", "Public Safety", "Victoria Memorial", REDACTED_TEST_JPEG, "image/jpeg"],
-    ["Electricity problem reported near Esplanade", "Electricity related problem", "Esplanade", REDACTED_TEST_JPEG, "image/jpeg"]
+    { message: "This is garbage, reported near Park Street", category: "Garbage and Sanitation", location: "Park Street", image: REDACTED_TEST_JPEG, mimeType: "image/jpeg" },
+    { message: "Pothole reported near College Street", category: "Road and Infrastructure", location: "College Street" },
+    { message: "Water leakage reported near New Market", category: "Water and Drainage", location: "New Market", image: REDACTED_TEST_PNG, mimeType: "image/png" },
+    { message: "Streetlight is out near Victoria Memorial", category: "Public Safety", location: "Victoria Memorial" },
+    { message: "Electricity problem reported near Esplanade", category: "Electricity related problem", location: "Esplanade" }
   ];
 
-  await withServer(createRegressionApp(), async (server) => {
-    for (const [message, category, location, image, mimeType] of cases) {
-      const response = await postCurrentChat(server, {
-        message,
-        history: [],
-        image,
-        mimeType
-      });
+  const received = [];
+  let modelRequests = 0;
+  await withServer(createRegressionApp({
+    onRequest: (request) => received.push(request),
+    onModelRequest: () => { modelRequests += 1; }
+  }), async (server) => {
+    for (const { message, category, location, image, mimeType } of cases) {
+      const body = { message, history: [] };
+      if (image) {
+        body.image = image;
+        body.mimeType = mimeType;
+      } else {
+        body.imageAttached = true;
+      }
+      const response = await postCurrentChat(server, body);
       assert.equal(response.status, 200);
       const payload = await response.json();
       assert.equal(payload.ok, true);
@@ -94,6 +105,11 @@ test("chat classifies image-plus-text civic issues from text without sending the
       assert.match(payload.reply, /photo was not analyzed/i);
     }
   });
+  assert.equal(modelRequests, 0);
+  assert.equal(received.length, cases.length);
+  assert.ok(received.every((request) =>
+    request.imageAttached === true && !Object.hasOwn(request, "image") && !Object.hasOwn(request, "mimeType")
+  ));
 });
 
 test("chat treats a valid photo as supporting evidence for non-keyword text", async () => {
@@ -234,5 +250,73 @@ test("chat rejects extra request fields instead of forwarding them to Gemini", a
     });
     assert.equal(response.status, 400);
     assert.equal(modelCalled, false);
+  });
+});
+
+test("chat errors include the real diagnostic in server logs without logging the prompt", async () => {
+  const originalError = console.error;
+  const entries = [];
+  console.error = (...args) => entries.push(args);
+  try {
+    await withServer(createAuthenticatedApp({
+      chatWithCivicX: async () => {
+        const error = new Error("Synthetic Gemini connection reset");
+        error.statusCode = 502;
+        error.code = "SYNTHETIC_GEMINI_FAILURE";
+        throw error;
+      }
+    }), async (server) => {
+      const response = await postCurrentChat(server, {
+        message: "private diagnostic phrase",
+        history: []
+      });
+      assert.equal(response.status, 502);
+    });
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0][0], "[AI chat] Request failed");
+  assert.equal(entries[0][1].code, "SYNTHETIC_GEMINI_FAILURE");
+  assert.equal(entries[0][1].status, 502);
+  assert.doesNotMatch(JSON.stringify(entries), /private diagnostic phrase/);
+});
+
+test("malformed chat JSON is logged by safe error type without logging request content", async () => {
+  const originalError = console.error;
+  const entries = [];
+  console.error = (...args) => entries.push(args);
+  try {
+    await withServer(createAuthenticatedApp(), async (server) => {
+      const response = await fetch(`http://127.0.0.1:${server.address().port}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${TEST_ACCESS_TOKEN}`
+        },
+        body: '{"message":"private diagnostic phrase", unquoted: true}'
+      });
+      assert.equal(response.status, 400);
+    });
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0][0], "[AI chat] Request parsing failed");
+  assert.equal(entries[0][1].type, "entity.parse.failed");
+  assert.doesNotMatch(JSON.stringify(entries), /private diagnostic phrase/);
+});
+
+test("chat.js is versioned in both pages and served with revalidation headers", async () => {
+  await withServer(createAuthenticatedApp(), async (server) => {
+    for (const page of ["ai.html", "dashboard.html"]) {
+      const response = await fetch(`http://127.0.0.1:${server.address().port}/${page}`);
+      assert.equal(response.status, 200);
+      assert.match(await response.text(), /src="chat\.js\?v=20261118"/);
+    }
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/chat.js?v=20261118`);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("cache-control"), /no-cache/);
+    assert.match(response.headers.get("cache-control"), /max-age=0/);
   });
 });

@@ -215,23 +215,6 @@
     fileInput.value = "";
   }
 
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = typeof reader.result === "string" ? reader.result : "";
-        const separator = dataUrl.indexOf(",");
-        if (separator < 0) {
-          reject(new Error("The redacted photo could not be encoded."));
-          return;
-        }
-        resolve(dataUrl.slice(separator + 1));
-      };
-      reader.onerror = () => reject(reader.error || new Error("The redacted photo could not be read."));
-      reader.readAsDataURL(file);
-    });
-  }
-
   async function prepareAttachment(file) {
     releaseAttachment();
     if (!file) return;
@@ -249,13 +232,12 @@
       const privacy = await imagePrivacyReady;
       const redacted = await privacy.redactPhoto(file);
       const redactedFile = await privacy.applyManualRegions(redacted);
-      const base64 = await fileToBase64(redactedFile);
       const previewUrl = URL.createObjectURL(redactedFile);
-      attachment = { image: base64, mimeType: redactedFile.type, previewUrl };
+      attachment = { previewUrl };
       attachmentThumbnail.src = previewUrl;
       attachmentPreview.hidden = false;
       attachmentLabel.textContent = `Redacted preview ready (${redacted.faceCount} faces, ${redacted.plateCount} plates covered). Review before sending.`;
-      status.textContent = "The original photo stays on this device. Only the redacted preview can be attached.";
+      status.textContent = "The original photo stays on this device. CivicX sends your text only; the photo is not uploaded or analyzed.";
     } catch (error) {
       attachmentWarning = "I couldn't read the attached photo, so the reply will be based only on your text.";
       status.textContent = `${error.message || "Photo privacy processing failed. The photo was not attached."} You can still send a text description.`;
@@ -281,10 +263,7 @@
     const typing = appendTypingBubble();
     try {
       const body = { message, history: historyBefore };
-      if (photo) {
-        body.image = photo.image;
-        body.mimeType = photo.mimeType;
-      }
+      if (photo) body.imageAttached = true;
       const { data: sessionData, error: sessionError } = await window.CivicXAuth.client.auth.getSession();
       if (sessionError) throw sessionError;
       const accessToken = sessionData.session?.access_token;
