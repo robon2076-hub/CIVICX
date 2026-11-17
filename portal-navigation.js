@@ -4,6 +4,13 @@
   const legacyUnlockPrefix = "civicx.portal-entry.opened.";
   let requestVersion = 0;
 
+  function showVerificationError(message) {
+    const status = document.querySelectorAll("[data-civicx-auth-status]")[0] ||
+      document.getElementById?.("authority-status") ||
+      document.getElementById?.("owner-status");
+    if (status) status.textContent = message;
+  }
+
   function clearLegacyUnlockState() {
     for (const storageName of ["localStorage", "sessionStorage"]) {
       try {
@@ -38,16 +45,25 @@
         headers: { authorization: `Bearer ${data.session.access_token}` },
         cache: "no-store"
       });
-      const result = await response.json().catch(() => ({}));
+      const contentType = response.headers?.get?.("content-type") || "";
+      const result = await response.json().catch(() => null);
       if (version !== requestVersion) return;
-      if (!response.ok || result.ok !== true) {
-        throw new Error(result.error || "Portal navigation could not be verified.");
+      if (!response.ok || result?.ok !== true ||
+          (contentType && !contentType.includes("application/json"))) {
+        const message = response.status === 404 || !result ||
+          (contentType && !contentType.includes("application/json"))
+          ? "Owner access verification needs the CIVICX server. Public pages remain available."
+          : result.error || "Portal navigation could not be verified.";
+        throw new Error(message);
       }
       ownerEntries.forEach((entry) => {
         entry.hidden = result.result?.isOwner !== true;
       });
     } catch (error) {
       if (version === requestVersion) {
+        showVerificationError(error instanceof TypeError
+          ? "Owner access verification needs the CIVICX server. Public pages remain available."
+          : error.message);
         console.error("[CivicX portal navigation] Owner entry verification failed", {
           message: error.message
         });

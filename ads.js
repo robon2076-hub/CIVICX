@@ -146,7 +146,7 @@
   function render() {
     const slots = slotNames.map((name) => document.querySelector(`[data-ad-slot="${name}"]`)).filter(Boolean);
     if (!window.CivicXAdPolicy?.canRenderAdSlots(slots.length) || !slots.length) return;
-    if (!(window.location.pathname === "/" || window.location.pathname.endsWith("/index.html") || (window.CivicXAdConfig?.allowedPages || []).includes(pageName))) {
+    if (!(window.location.pathname.endsWith("/") || pageName === "index.html" || (window.CivicXAdConfig?.allowedPages || []).includes(pageName))) {
       slots.forEach((slot) => { slot.hidden = true; slot.replaceChildren(); });
       return;
     }

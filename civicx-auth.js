@@ -201,8 +201,21 @@
   const ready = (async () => {
     try {
       const response = await fetch("/api/public-config");
-      const config = await response.json().catch(() => null);
-      if (!response.ok || !config?.supabase?.configured) {
+      const contentType = response.headers.get("content-type") || "";
+      const config = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : null;
+      if (response.status === 404 || !config) {
+        configurationError = "This feature needs the CIVICX server. Public pages and guest browsing still work.";
+        notify();
+        return { client: null, user: null, configured: false, configurationError };
+      }
+      if (!response.ok) {
+        configurationError = "CIVICX sign-in is temporarily unavailable. Public pages and guest browsing still work.";
+        notify();
+        return { client: null, user: null, configured: false, configurationError };
+      }
+      if (!config.supabase?.configured) {
         configurationError = "Private tracking needs Supabase configured by the site owner.";
         notify();
         return { client: null, user: null, configured: false, configurationError };
@@ -260,7 +273,9 @@
         if (!loaded.error && !loaded.stale && !loaded.profile) showUsernameStage(user);
       }
     } catch (error) {
-      configurationError = "Private tracking could not connect. Check the Supabase setup and reload.";
+      configurationError = error instanceof TypeError
+        ? "This feature needs the CIVICX server. Public pages and guest browsing still work."
+        : "Private tracking could not connect. Check the Supabase setup and reload.";
       console.error("[CivicX auth] Initialization failed", error);
     }
     notify();

@@ -2,13 +2,20 @@
   const DEFAULT_LOCATION = { name: "Kolkata, West Bengal", latitude: 22.5726, longitude: 88.3639 };
 
   async function getJson(url) {
-    const response = await fetch(url);
-    const contentType = response.headers.get("content-type") || "";
-    let payload = null;
-    if (contentType.includes("application/json")) {
-      payload = await response.json().catch(() => null);
+    let response;
+    try {
+      response = await fetch(url);
+    } catch {
+      throw new Error("This feature needs the CIVICX server. You can still browse other pages.");
     }
-    if (!response.ok || !payload) throw new Error(payload?.message || "The information is temporarily unavailable.");
+    const contentType = response.headers.get("content-type") || "";
+    const payload = contentType.includes("application/json")
+      ? await response.json().catch(() => null)
+      : null;
+    if (response.status === 404 || !contentType.includes("application/json") || !payload) {
+      throw new Error("This feature needs the CIVICX server. You can still browse other pages.");
+    }
+    if (!response.ok) throw new Error(payload.message || "The information is temporarily unavailable.");
     return payload;
   }
 

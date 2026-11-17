@@ -1509,6 +1509,7 @@ async function generateAiDescription() {
   }
 
   let analysisResult = null;
+  let serverUnavailable = false;
 
   // Try server API first
   try {
@@ -1529,10 +1530,16 @@ async function generateAiDescription() {
     }).catch(() => null);
     clearTimeout(timeout);
 
+    if (!response || !response.ok ||
+        !(response.headers.get("content-type") || "").includes("application/json")) {
+      serverUnavailable = true;
+    }
     if (response && response.ok) {
       const serverResult = await readAiResponse(response).catch(() => null);
       if (serverResult && serverResult.category && serverResult.description) {
         analysisResult = serverResult;
+      } else {
+        serverUnavailable = true;
       }
     }
   } catch (apiError) {
@@ -1546,7 +1553,9 @@ async function generateAiDescription() {
 
   // Render the structured table
   renderAiAnalysis(analysisResult, uploadFiles);
-  status.textContent = "✨ Analysis complete! Review the table below and click 'Fill All Fields in Form' to auto-fill your report.";
+  status.textContent = serverUnavailable
+    ? "The CIVICX server is unavailable; local photo analysis is complete. Review the table below and click 'Fill All Fields in Form' to auto-fill your report."
+    : "✨ Analysis complete! Review the table below and click 'Fill All Fields in Form' to auto-fill your report.";
   button.disabled = false;
 }
 

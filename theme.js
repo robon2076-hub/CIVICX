@@ -1,13 +1,14 @@
 (() => {
   const pageLinks = [
-    ["Home", "/index.html"],
-    ["Dashboard", "/dashboard.html"],
-    ["Community", "/community.html"],
-    ["Tutorial", "/index.html#tutorial"],
-    ["Contact", "/index.html#contact"]
+    ["Home", "index.html"],
+    ["Dashboard", "dashboard.html"],
+    ["Community", "community.html"],
+    ["Tutorial", "index.html#tutorial"],
+    ["Contact", "index.html#contact"]
   ];
-  const pathname = window.location.pathname.replace(/\/$/, "") || "/index.html";
-  const currentPage = pathname === "/" ? "/index.html" : pathname;
+  const pathname = window.location.pathname;
+  const lastPathSegment = pathname.replace(/\/+$/, "").split("/").pop();
+  const currentPage = lastPathSegment?.endsWith(".html") ? lastPathSegment : "index.html";
 
   function makeSiteNav() {
     const menu = document.createElement("details");
@@ -81,7 +82,7 @@
   document.querySelectorAll(".dashboard-welcome, .ai-locked-card").forEach((hero) => {
     hero.classList.add("hero", "hero--short");
   });
-  if (pathname === "/authority.html") {
+  if (currentPage === "authority.html") {
     const title = document.querySelector(".portal-welcome .page-overline");
     if (title) {
       const authorityBadge = document.createElement("span");
@@ -199,7 +200,7 @@
   });
 
   const assistantScript = document.createElement("script");
-  assistantScript.src = "/assistant.js";
+  assistantScript.src = "assistant.js";
   assistantScript.async = true;
   assistantScript.addEventListener("error", () => {
     console.error("[CivicX assistant] Widget failed to load.");

@@ -337,7 +337,15 @@
         cache: "no-store",
         signal: controller.signal
       });
-      const payload = await response.json().catch(() => ({}));
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : null;
+      if (response.status === 404 || !contentType.includes("application/json") || !payload) {
+        const error = new Error("Public report pins need the CIVICX server.");
+        error.serverUnavailable = true;
+        throw error;
+      }
       if (!response.ok || payload.ok !== true || !Array.isArray(payload.result?.reports)) {
         throw new Error(payload.error || "Public report pins could not be loaded.");
       }
@@ -352,7 +360,9 @@
       console.error("[CivicX dashboard] Public report pins could not be loaded", {
         message: error.message || "UNKNOWN"
       });
-      elements.publicMapStatus.textContent = "Public report pins could not be loaded. Check the connection and database migration, then retry.";
+      elements.publicMapStatus.textContent = error.serverUnavailable || error instanceof TypeError
+        ? "Public report pins need the CIVICX server. You can still explore the map."
+        : "Public report pins could not be loaded. Check the connection and database migration, then retry.";
     } finally {
       if (publicMapAbortController === controller) publicMapAbortController = null;
     }
@@ -539,7 +549,15 @@
   async function loadJurisdictions() {
     try {
       const response = await fetch("/api/jurisdictions", { cache: "no-store" });
-      const payload = await response.json().catch(() => ({}));
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : null;
+      if (response.status === 404 || !contentType.includes("application/json") || !payload) {
+        const error = new Error("Registered city options need the CIVICX server.");
+        error.serverUnavailable = true;
+        throw error;
+      }
       if (!response.ok || payload.ok !== true || !Array.isArray(payload.result?.jurisdictions)) {
         throw new Error(payload.error || "Registered city options could not be loaded.");
       }
@@ -558,7 +576,9 @@
       });
       elements.mapRegion.replaceChildren(new Option("Regions unavailable", ""));
       elements.reportCity.replaceChildren(new Option("Registered regions unavailable", ""));
-      elements.mapCaption.textContent = "Registered city selection is unavailable. Check the CivicX database migration and server configuration.";
+      elements.mapCaption.textContent = error.serverUnavailable || error instanceof TypeError
+        ? "Registered city selection needs the CIVICX server. You can still explore the map."
+        : "Registered city selection is unavailable. Check the CivicX database migration and server configuration.";
     }
   }
 
@@ -760,7 +780,7 @@
       return;
     }
     if (!jurisdictions.length) {
-      elements.reportError.textContent = "Registered city options are unavailable. Try again after the jurisdiction registry is configured.";
+      elements.reportError.textContent = "Registered city options need the CIVICX server. You can still explore the map.";
       elements.reportError.hidden = false;
       elements.reportDialog.showModal();
       return;

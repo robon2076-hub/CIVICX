@@ -289,18 +289,26 @@
       if (sessionError) throw sessionError;
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Your session expired. Sign in again to use CivicX AI.");
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`
-        },
-        body: JSON.stringify(body)
-      });
+      let response;
+      try {
+        response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(body)
+        });
+      } catch {
+        throw new Error("This feature needs the CIVICX server. Your message is still available in the chat.");
+      }
       const contentType = response.headers.get("content-type") || "";
       const result = contentType.includes("application/json")
         ? await response.json().catch(() => null)
         : null;
+      if (response.status === 404 || !contentType.includes("application/json") || !result) {
+        throw new Error("This feature needs the CIVICX server. Your message is still available in the chat.");
+      }
       if (!response.ok || !result?.ok || typeof result.reply !== "string" || !result.reply.trim()) {
         const messageText = result?.error || result?.message ||
           `CivicX AI is temporarily unavailable (HTTP ${response.status}).`;

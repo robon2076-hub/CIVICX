@@ -17,16 +17,32 @@
   }
 
   async function api(url, options = {}) {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        authorization: `Bearer ${await accessToken()}`,
-        "x-civicx-master-key": window.CivicXPortalSession.get("owner", activeUserId),
-        ...(options.headers || {})
-      },
-      cache: "no-store"
-    });
-    const result = await response.json().catch(() => ({}));
+    let response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          authorization: `Bearer ${await accessToken()}`,
+          "x-civicx-master-key": window.CivicXPortalSession.get("owner", activeUserId),
+          ...(options.headers || {})
+        },
+        cache: "no-store"
+      });
+    } catch (error) {
+      if (error instanceof TypeError) {
+        throw new Error("This feature needs the CIVICX server. Public pages remain available.");
+      }
+      throw error;
+    }
+    const contentType = response.headers.get("content-type") || "";
+    const result = contentType.includes("application/json")
+      ? await response.json().catch(() => null)
+      : null;
+    if (response.status === 404 || !contentType.includes("application/json") || !result) {
+      const error = new Error("This feature needs the CIVICX server. Public pages remain available.");
+      error.status = response.status;
+      throw error;
+    }
     if (!response.ok || result.ok !== true) {
       const error = new Error(result.error || "The owner request could not be completed.");
       error.status = response.status;

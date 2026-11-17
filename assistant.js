@@ -220,7 +220,7 @@
       description: typeof draft.description === "string" ? draft.description.slice(0, 2500) : "",
       expiresAt: Date.now() + 5 * 60_000
     };
-    if (window.location.pathname.replace(/\/$/, "") === "/dashboard.html") {
+    if (window.location.pathname.endsWith("dashboard.html")) {
       window.dispatchEvent(new CustomEvent("civicx-assistant-report-draft", { detail: reportDraft }));
       return;
     }
@@ -233,7 +233,7 @@
     window.crypto.getRandomValues(tokenBytes);
     const token = [...tokenBytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
     const channel = new BroadcastChannel(`civicx-assistant-report-${token}`);
-    const dashboard = window.open(`/dashboard.html?assistant-draft=${token}`, "_blank");
+    const dashboard = window.open(`dashboard.html?assistant-draft=${token}`, "_blank");
     if (!dashboard) {
       channel.close();
       addMessage("assistant", "Your browser blocked the Dashboard tab. The suggested report remains visible here; copy its category and description, then open the Dashboard manually.");
@@ -380,9 +380,20 @@
       body.append("history", JSON.stringify(requestHistory));
       body.append("category", selectedCategory);
       if (selectedFile) body.append("image", selectedFile);
-      const response = await fetch("/api/assistant/analyze", { method: "POST", body });
-      const payload = await response.json().catch(() => ({}));
+      let response;
+      try {
+        response = await fetch("/api/assistant/analyze", { method: "POST", body });
+      } catch {
+        throw new Error("This feature needs the CIVICX server. Your message and photo are still here.");
+      }
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : null;
       typing.remove();
+      if (response.status === 404 || !contentType.includes("application/json") || !payload) {
+        throw new Error("This feature needs the CIVICX server. Your message and photo are still here.");
+      }
       if (!response.ok || payload.ok !== true) {
         throw new Error(payload.error || "The assistant is temporarily unavailable. Try again or report manually.");
       }
@@ -452,7 +463,7 @@
     } else if (action === "photo") {
       fileInput.click();
     } else if (action === "track") {
-      window.location.assign("/dashboard.html#my-reports");
+      window.location.assign("dashboard.html#my-reports");
     } else if (action === "help") {
       input.value = "How does this website help me prepare and track a civic report?";
       input.focus();

@@ -8,15 +8,17 @@ import {
 } from "./image-privacy-core.mjs";
 
 const JPEG_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const FACE_MODELS = [
-  "/assets/models/blaze_face_short_range.tflite",
-  "/assets/models/blaze_face_full_range.tflite"
-];
-const PLATE_MODEL = "/assets/models/license-plate.onnx";
 const MAX_SOURCE_DIMENSION = 3000;
 const MAX_DETECTION_DIMENSION = 1280;
 const PLATE_INPUT_SIZE = 640;
 const MAX_UPLOAD_BYTES = 7.5 * 1024 * 1024;
+const MEDIAPIPE_WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
+const ONNX_WASM_PATH = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/";
+const FACE_MODELS = [
+  "assets/models/blaze_face_short_range.tflite",
+  "assets/models/blaze_face_full_range.tflite"
+];
+const PLATE_MODEL = "assets/models/license-plate.onnx";
 let modelsPromise;
 
 function createCanvas(width, height) {
@@ -31,9 +33,9 @@ function createCanvas(width, height) {
 function loadModels() {
   if (!modelsPromise) {
     modelsPromise = (async () => {
-      ort.env.wasm.wasmPaths = "/vendor/onnxruntime/dist/";
+      ort.env.wasm.wasmPaths = ONNX_WASM_PATH;
       ort.env.wasm.numThreads = 1;
-      const vision = await FilesetResolver.forVisionTasks("/vendor/mediapipe/wasm");
+      const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_PATH);
       const faceDetectors = [];
       let plateDetector;
       try {

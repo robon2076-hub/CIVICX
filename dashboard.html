@@ -7,6 +7,7 @@
     <meta name="description" content="Explore local civic issues, create account-linked reports, and follow their histories on CIVICX." />
     <title>CIVICX — Community dashboard</title>
     <link rel="stylesheet" href="theme.css" />
+    <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   </head>
@@ -238,7 +239,7 @@
     <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Public access for exploring. Account access for saving.</span></footer>
 
     <script type="importmap">
-      {"imports":{"@mediapipe/tasks-vision":"/vendor/mediapipe/vision_bundle.mjs","onnxruntime-web":"/vendor/onnxruntime/dist/ort.bundle.min.mjs"}}
+      {"imports":{"@mediapipe/tasks-vision":"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/vision_bundle.mjs","onnxruntime-web":"https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/ort.bundle.min.mjs"}}
     </script>
     <script type="module" src="image-privacy.mjs"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
