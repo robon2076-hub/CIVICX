@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CIVICX CPGRAMS Assistant</title>
+    <style>
+      body { width: 330px; margin: 0; padding: 14px; color: #23352a; font: 13px "Segoe UI", sans-serif; }
+      h1 { margin: 0 0 6px; font-size: 16px; }
+      p { color: #65756a; font-size: 11px; line-height: 1.5; }
+      textarea { width: 100%; min-height: 125px; box-sizing: border-box; border: 1px solid #dce5dd; border-radius: 6px; padding: 8px; font: 10px Consolas, monospace; }
+      button { min-height: 34px; margin-top: 9px; border: 0; border-radius: 6px; background: #23845b; padding: 0 12px; color: white; font-weight: 700; cursor: pointer; }
+      button:disabled { opacity: .6; cursor: not-allowed; }
+      #message { min-height: 16px; }
+    </style>
+  </head>
+  <body>
+    <h1>CIVICX → CPGRAMS</h1>
+    <p>Copy report fields from CivicX and paste them below. Then open the CPGRAMS form and choose Fill. OTP, CAPTCHA, attachments, and final submission remain manual.</p>
+    <label for="report-json">CivicX report JSON</label>
+    <textarea id="report-json" spellcheck="false" placeholder="Paste copied report fields here"></textarea>
+    <button id="fill-form" type="button">Fill fields on this CPGRAMS tab</button>
+    <p id="message" role="status" aria-live="polite"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

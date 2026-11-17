@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f5" />
+    <title>Weather | CIVICX</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="environment-page">
+    <aside class="ad-rail ad-rail-left" aria-label="Sponsored civic information"><div data-ad-slot="desktop-left" hidden></div></aside>
+    <aside class="ad-rail ad-rail-right" aria-label="Sponsored civic information"><div data-ad-slot="desktop-right" hidden></div></aside>
+    <header class="environment-topbar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark">C</span><span class="brand-name">civic<span>x</span></span></a>
+      <div class="community-header-actions">
+        <a class="environment-back" href="dashboard.html">← Back to dashboard</a>
+        <button class="button button-secondary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+        <button class="button button-primary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="signup">Sign up</button>
+      </div>
+    </header>
+    <main class="environment-shell">
+      <p class="eyebrow"><span class="eyebrow-dot"></span> LOCAL CONDITIONS</p>
+      <h1>Weather</h1>
+      <p class="environment-intro">Weather forecasts for your selected location, with source and update time shown.</p>
+      <form class="environment-search" id="weather-search">
+        <label class="sr-only" for="weather-location">Search city or locality</label>
+        <input id="weather-location" type="search" value="Kolkata" maxlength="80" placeholder="Search a city or locality" />
+        <button class="button button-primary" type="submit">Search</button>
+        <button class="button button-secondary" id="weather-use-location" type="button">Use my location</button>
+      </form>
+      <div class="environment-results" id="weather-results" hidden></div>
+      <p class="environment-status" id="weather-status" role="status" aria-live="polite">Loading forecast…</p>
+      <section id="weather-content" hidden>
+        <div class="environment-section-title"><div><h2 id="weather-place">Kolkata</h2><p id="weather-updated"></p></div><span class="data-source-tag">Open-Meteo forecast</span></div>
+        <div class="environment-metrics">
+          <article class="environment-metric environment-current"><span>Current temperature</span><strong id="weather-temperature">—</strong><small id="weather-condition">—</small></article>
+          <article class="environment-metric"><span>Feels like</span><strong id="weather-feels">—</strong></article>
+          <article class="environment-metric"><span>Humidity</span><strong id="weather-humidity">—</strong></article>
+          <article class="environment-metric"><span>Wind speed</span><strong id="weather-wind">—</strong></article>
+          <article class="environment-metric"><span>Precipitation</span><strong id="weather-rain">—</strong></article>
+        </div>
+        <section class="environment-panel">
+          <h2>Next hours</h2><div class="hourly-list" id="weather-hourly"></div>
+        </section>
+        <section class="environment-panel">
+          <h2>5-day forecast</h2><div class="forecast-list" id="weather-daily"></div>
+        </section>
+      </section>
+      <p class="environment-disclaimer">Forecasts are model-based and may differ from local observations. Weather data: <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo</a>. CIVICX is not an emergency-warning service.</p>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Weather data is model-based and not an emergency-warning service.</span></footer>
+    <script src="environment.js"></script>
+    <script src="weather.js"></script>
+    <script src="ads-policy.js"></script>
+    <script src="ads.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f5" />
+    <title>Air Pollution & AQI | CIVICX</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="environment-page">
+    <aside class="ad-rail ad-rail-left" aria-label="Sponsored civic information"><div data-ad-slot="desktop-left" hidden></div></aside>
+    <aside class="ad-rail ad-rail-right" aria-label="Sponsored civic information"><div data-ad-slot="desktop-right" hidden></div></aside>
+    <header class="environment-topbar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark">C</span><span class="brand-name">civic<span>x</span></span></a>
+      <div class="community-header-actions">
+        <a class="environment-back" href="dashboard.html">← Back to dashboard</a>
+        <button class="button button-secondary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+        <button class="button button-primary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="signup">Sign up</button>
+      </div>
+    </header>
+    <main class="environment-shell">
+      <p class="eyebrow"><span class="eyebrow-dot"></span> ENVIRONMENT</p>
+      <h1>Air Pollution / AQI</h1>
+      <p class="environment-intro">A modelled air-quality estimate for your selected location. This is not a CPCB station reading.</p>
+      <form class="environment-search" id="air-search">
+        <label class="sr-only" for="air-location">Search city or locality</label>
+        <input id="air-location" type="search" value="Kolkata" maxlength="80" placeholder="Search a city or locality" />
+        <button class="button button-primary" type="submit">Search</button>
+        <button class="button button-secondary" id="air-use-location" type="button">Use my location</button>
+      </form>
+      <div class="environment-results" id="air-results" hidden></div>
+      <p class="environment-status" id="air-status" role="status" aria-live="polite">Loading air-quality estimate…</p>
+      <section id="air-content" hidden>
+        <div class="environment-section-title"><div><h2 id="air-place">Kolkata</h2><p id="air-updated"></p></div><span class="data-source-tag">Open-Meteo · CAMS model</span></div>
+        <div class="environment-aqi-card" id="aqi-card">
+          <div><span>Estimated US AQI</span><strong id="air-aqi">—</strong><small id="air-category">—</small></div>
+          <p id="air-advice"></p>
+        </div>
+        <div class="environment-metrics">
+          <article class="environment-metric"><span>PM2.5</span><strong id="air-pm25">—</strong><small>µg/m³</small></article>
+          <article class="environment-metric"><span>PM10</span><strong id="air-pm10">—</strong><small>µg/m³</small></article>
+          <article class="environment-metric"><span>Carbon monoxide</span><strong id="air-co">—</strong><small>µg/m³</small></article>
+          <article class="environment-metric"><span>Nitrogen dioxide</span><strong id="air-no2">—</strong><small>µg/m³</small></article>
+          <article class="environment-metric"><span>Ozone</span><strong id="air-o3">—</strong><small>µg/m³</small></article>
+        </div>
+        <section class="environment-panel">
+          <h2>Recent and forecast trend</h2><p class="environment-panel-note">Modelled hourly US AQI · not a regulatory monitoring-station time series</p>
+          <div class="air-trend" id="air-trend"></div>
+        </section>
+        <p class="station-note">Monitoring station: not provided by this model. Open-Meteo combines CAMS atmospheric-composition model forecasts at approximately 11–45 km resolution; the value may not match a nearby official monitor.</p>
+      </section>
+      <p class="environment-disclaimer">Air-quality data: <a href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noopener noreferrer">Open-Meteo Air Quality API</a>. AQI values use the US AQI scale and are not CPCB National AQI readings or medical advice.</p>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Air-quality values are model estimates, not official station readings.</span></footer>
+    <script src="environment.js"></script>
+    <script src="air-quality.js"></script>
+    <script src="ads-policy.js"></script>
+    <script src="ads.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

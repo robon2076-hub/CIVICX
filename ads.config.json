@@ -1,0 +1,35 @@
+{
+  "allowedPages": [
+    "community.html",
+    "dashboard.html",
+    "ai.html",
+    "air-quality.html",
+    "weather.html"
+  ],
+  "ads": [
+    {
+      "id": "samsung-community",
+      "brand": "Samsung",
+      "type": "image",
+      "file": "assets/samsung-campaign-placeholder.svg",
+      "link": "https://www.samsung.com/in/",
+      "headline": "Technology for the moments that matter.",
+      "startDate": "2025-01-01",
+      "endDate": "2099-12-31",
+      "enabled": false,
+      "weight": 2
+    },
+    {
+      "id": "apple-community",
+      "brand": "Apple",
+      "type": "image",
+      "file": "assets/apple-campaign-placeholder.svg",
+      "link": "https://www.apple.com/in/",
+      "headline": "Thoughtful technology, made simple.",
+      "startDate": "2025-01-01",
+      "endDate": "2099-12-31",
+      "enabled": false,
+      "weight": 1
+    }
+  ]
+}

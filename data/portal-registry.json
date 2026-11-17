@@ -1,0 +1,56 @@
+{
+  "portals": [
+    {
+      "id": "cpgrams",
+      "name": "CPGRAMS",
+      "jurisdiction": "National and state public authorities",
+      "officialUrl": "https://pgportal.gov.in/",
+      "filingUrl": "https://pgportal.gov.in/Home/LodgeGrievance",
+      "statusUrl": "https://pgportal.gov.in/Status",
+      "filingMode": "assisted",
+      "captchaOrOtp": "The user completes verification on the official portal.",
+      "emailFilingSupported": false,
+      "notes": [
+        "The official home page states that grievances sent by email are not entertained.",
+        "CIVICX does not submit CPGRAMS forms or check status automatically."
+      ]
+    }
+  ],
+  "issueRouting": [
+    {
+      "issueType": "Pothole",
+      "suggestedDepartment": "Roads / Public Works",
+      "selectionNote": "Suggestion only. Select the responsible authority and road jurisdiction on the official portal."
+    },
+    {
+      "issueType": "Garbage",
+      "suggestedDepartment": "Municipal sanitation / local body",
+      "selectionNote": "Suggestion only. CPGRAMS department/category options must be confirmed by the citizen."
+    },
+    {
+      "issueType": "Water leakage",
+      "suggestedDepartment": "Water supply / Public Health Engineering",
+      "selectionNote": "Suggestion only. Select the responsible local water authority on the official portal."
+    },
+    {
+      "issueType": "Streetlight",
+      "suggestedDepartment": "Municipal roads / street lighting",
+      "selectionNote": "Suggestion only. Confirm the responsible local body on the official portal."
+    }
+  ],
+  "authorityChannels": [],
+  "officialCatalog": {
+    "availableInThisRegistry": false,
+    "reason": "The public CPGRAMS pages reviewed expose the portal, grievance-status page, and Nodal PG Officer directory, but not a downloadable official issue-category catalog. No department/category labels have been fabricated.",
+    "sources": [
+      {
+        "name": "CPGRAMS official home",
+        "url": "https://pgportal.gov.in/"
+      },
+      {
+        "name": "CPGRAMS official Nodal PG Officers directory",
+        "url": "https://pgportal.gov.in/Home/NodalPgOfficers"
+      }
+    ]
+  }
+}

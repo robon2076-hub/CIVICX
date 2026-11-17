@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f6f7f5" />
+    <title>CIVICX — Sponsor stats</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="sponsor-admin-page">
+    <main class="sponsor-admin-shell">
+      <header class="sponsor-admin-header">
+        <a class="brand" href="dashboard.html" aria-label="CIVICX dashboard">
+          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 22.5 15.8 5l11.1 17.5H5Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M11 22.5 16 14l5.2 8.5M9 16.5h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+          <span class="brand-name">civic<span>x</span></span>
+        </a>
+        <div class="community-header-actions">
+          <a class="sponsor-admin-back" href="dashboard.html">← Back to dashboard</a>
+          <button class="button button-secondary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+          <button class="button button-primary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="signup">Sign up</button>
+        </div>
+      </header>
+
+      <section class="sponsor-admin-content">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> CURATED PARTNERS</p>
+        <h1>Sponsor stats<span class="heading-period">.</span></h1>
+        <p class="sponsor-admin-intro">Review the campaigns configured in <code>ads.config.json</code> and their browser-local demo counts.</p>
+        <div class="sponsor-admin-warning" role="note">
+          <strong>Prototype only — not a secured admin page.</strong>
+          Counts are stored in this browser and can be changed or cleared by visitors. Add authentication and server-side metrics before using this for real campaigns.
+        </div>
+        <div class="sponsor-admin-summary" id="sponsor-admin-summary" aria-live="polite">
+          <div class="sponsor-admin-stat"><span>Active campaigns</span><strong id="active-campaign-count">—</strong></div>
+          <div class="sponsor-admin-stat"><span>Recorded impressions</span><strong id="total-impressions">—</strong></div>
+          <div class="sponsor-admin-stat"><span>Recorded clicks</span><strong id="total-clicks">—</strong></div>
+        </div>
+        <div class="sponsor-admin-table-wrap">
+          <table class="sponsor-admin-table">
+            <thead><tr><th>CAMPAIGN</th><th>TYPE</th><th>DATES</th><th>IMPRESSIONS</th><th>CLICKS</th></tr></thead>
+            <tbody id="sponsor-admin-body"><tr><td colspan="5">Loading ad configuration…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="sponsor-admin-note" id="sponsor-admin-note">Only campaigns marked active and within their configured dates are eligible to display.</p>
+      </section>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Sponsor stats are a public prototype and are not secured admin metrics.</span></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="ads-policy.js"></script>
+    <script src="ads.js"></script>
+    <script src="sponsor-admin.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

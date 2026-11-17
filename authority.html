@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f2ea" />
+    <meta name="description" content="Jurisdiction-scoped municipal authority workspace for CivicX." />
+    <title>CIVICX Authority Portal</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="cx-dashboard">
+    <header class="app-header">
+      <a class="cx-brand" href="dashboard.html" aria-label="CIVICX dashboard"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a>
+      <nav class="app-nav" aria-label="Main navigation">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="community.html">Community</a>
+        <a class="is-current" data-authority-entry href="authority.html" hidden>Authority</a>
+        <a data-owner-entry href="owner.html" hidden>Owner</a>
+      </nav>
+      <div class="app-account">
+        <span class="account-caption" id="authority-account">Checking account…</span>
+        <button type="button" class="account-button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+      </div>
+    </header>
+    <main class="dashboard-main portal-main">
+      <section class="dashboard-welcome portal-welcome">
+        <div>
+          <p class="page-overline"><span></span> AUTHORITY WORKSPACE</p>
+          <h1>Local action,<br /><em>within scope.</em></h1>
+          <p class="welcome-copy">Reports are available only to an active, allowlisted authority account and only within its database-assigned active jurisdictions.</p>
+        </div>
+        <aside class="welcome-status">
+          <span class="status-spark" aria-hidden="true">⌖</span>
+          <p class="status-label">ACCESS CONTROL</p>
+          <strong>Server verified</strong>
+          <p>Every report query, detail, action, and attachment is rechecked against trusted assignments.</p>
+        </aside>
+      </section>
+      <p class="portal-status" id="authority-status" role="status" aria-live="polite">Checking your signed-in account…</p>
+      <section class="portal-key-panel" id="authority-key-panel" hidden>
+        <h2>Unlock authority access</h2>
+        <p>Sign in and enter the server-configured Authority master key. The key stays in memory only and is cleared when you sign out.</p>
+        <form id="authority-key-form">
+          <label for="authority-master-key">Authority master key</label>
+          <input id="authority-master-key" type="password" autocomplete="off" spellcheck="false" maxlength="512" required />
+          <button type="submit" class="action-dark">Verify and open portal</button>
+        </form>
+        <div id="authority-jurisdiction-panel" hidden>
+          <label for="authority-jurisdiction-select">Municipal corporation</label>
+          <select id="authority-jurisdiction-select" required></select>
+          <button type="button" class="action-dark" id="authority-activate">Activate authority access</button>
+        </div>
+      </section>
+      <section class="portal-workspace" id="authority-workspace" hidden>
+        <div class="section-title-row">
+          <div><p class="page-overline">ASSIGNED REPORTS</p><h2>Jurisdiction queue</h2></div>
+          <button type="button" class="action-light compact-action" id="authority-refresh">Refresh reports</button>
+        </div>
+        <div class="portal-report-list" id="authority-report-list"></div>
+      </section>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="dashboard.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Access and actions are logged and jurisdiction-scoped.</span></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="portal-navigation.js"></script>
+    <script src="portal-session.js"></script>
+    <script src="authority-portal.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

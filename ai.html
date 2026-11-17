@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f2ea" />
+    <meta name="description" content="Get account-gated AI assistance for civic questions and report wording on CIVICX." />
+    <title>CIVICX AI — Civic help, clearly</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="cx-ai-page">
+    <header class="app-header">
+      <a class="cx-brand" href="dashboard.html" aria-label="CIVICX dashboard"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a>
+      <nav class="app-nav" aria-label="Main navigation">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="community.html">Community</a>
+        <a class="is-current" href="ai.html">CivicX AI</a>
+        <a data-authority-entry href="authority.html" hidden>Authority</a>
+        <a data-owner-entry href="owner.html" hidden>Owner</a>
+      </nav>
+      <button type="button" class="account-button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+    </header>
+
+    <aside class="ad-rail ad-rail-left" aria-label="Sponsored civic information"><div data-ad-slot="desktop-left" hidden></div></aside>
+    <aside class="ad-rail ad-rail-right" aria-label="Sponsored civic information"><div data-ad-slot="desktop-right" hidden></div></aside>
+
+    <main class="ai-page-main">
+      <section class="ai-locked-card" id="ai-locked">
+        <p class="page-overline"><span></span> CIVICX AI</p>
+        <h1>Useful civic help,<br /><em>with context.</em></h1>
+        <p>Log in or create an account to open the CivicX assistant. It can help explain reporting steps and improve draft wording, but it cannot file or verify a government complaint.</p>
+        <div class="welcome-actions">
+          <button type="button" class="action-dark" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+          <button type="button" class="action-light" data-civicx-auth-trigger data-civicx-auth-mode="signup">Create an account</button>
+        </div>
+        <a class="ai-back-link" href="dashboard.html">← Back to dashboard</a>
+      </section>
+
+      <section class="ai-workspace" id="ai-workspace" hidden>
+        <div class="ai-page-heading">
+          <div><p class="page-overline"><span></span> CIVICX AI ASSISTANT</p><h1>How can we help?</h1><p>Ask a civic question or get help preparing clear report wording.</p></div>
+          <a class="ai-back-link" href="dashboard.html">← Dashboard</a>
+        </div>
+        <div class="ai-guidance-note"><strong>Guidance, not an authority service.</strong><span>Do not include personal or sensitive details. CIVICX AI cannot submit complaints or confirm official status.</span></div>
+        <aside class="civicx-chat-widget" aria-label="CIVICX AI assistant">
+          <section class="civicx-chat-panel" id="civicx-chat-panel" role="dialog" aria-labelledby="civicx-chat-title" hidden>
+            <header class="civicx-chat-header">
+              <div class="civicx-chat-avatar" aria-hidden="true">✧</div>
+              <div><h2 id="civicx-chat-title">CIVICX Assistant</h2><p>Helpful civic information, with limits</p></div>
+              <button class="civicx-chat-new" id="civicx-chat-new" type="button">New chat</button>
+              <button class="civicx-chat-close" id="civicx-chat-close" type="button" aria-label="Close assistant">×</button>
+            </header>
+            <p class="civicx-chat-notice" id="civicx-chat-notice">Your text is sent to Google Gemini. Locally redacted photos are accepted only as supporting evidence; they are not analyzed or stored by CivicX. Avoid personal details. CIVICX cannot file or verify complaints.</p>
+            <div class="civicx-chat-welcome" id="civicx-chat-welcome">
+              <p>Hi, I’m your CivicX AI Assistant. What civic question can I help with?</p>
+              <div class="civicx-chat-suggestions" aria-label="Suggested questions">
+                <button type="button" data-chat-prompt="How do I prepare a clear civic issue report?">How do I prepare a clear report?</button>
+                <button type="button" data-chat-prompt="What details help explain a road repair issue?">What details help explain a road issue?</button>
+                <button type="button" data-chat-prompt="How do I follow a complaint filed through CPGRAMS?">How do I follow a CPGRAMS complaint?</button>
+              </div>
+            </div>
+            <div class="civicx-chat-messages" id="civicx-chat-messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+            <div class="civicx-chat-attachment" id="civicx-chat-attachment" hidden>
+              <img id="civicx-chat-thumbnail" alt="Locally redacted issue photo preview" />
+              <span id="civicx-chat-attachment-label">Redacted photo ready. Review the preview before sending.</span>
+              <button class="civicx-chat-remove-attachment" id="civicx-chat-remove-attachment" type="button" aria-label="Remove attached photo">×</button>
+            </div>
+            <form class="civicx-chat-form" id="civicx-chat-form">
+              <label class="civicx-chat-attach" for="civicx-chat-file" title="Attach and locally redact a photo"><span aria-hidden="true">＋</span><span class="sr-only">Attach civic issue photo</span></label>
+              <input class="sr-only" id="civicx-chat-file" type="file" accept="image/jpeg,image/png,image/webp" />
+              <label class="sr-only" for="civicx-chat-input">Message the CIVICX Assistant</label>
+              <textarea id="civicx-chat-input" rows="2" maxlength="1200" placeholder="Ask a civic question…"></textarea>
+              <button class="civicx-chat-send" id="civicx-chat-send" type="submit" aria-label="Send message">Send</button>
+            </form>
+            <p class="civicx-chat-status" id="civicx-chat-status" role="status" aria-live="polite">Chat history is stored only for this browser tab.</p>
+          </section>
+          <button class="civicx-chat-launcher" id="civicx-chat-launcher" type="button" data-chat-open aria-expanded="false" aria-controls="civicx-chat-panel"><span aria-hidden="true">✧</span><span>Open assistant</span></button>
+        </aside>
+      </section>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Independent civic guidance. Official filing remains with the relevant authority.</span></footer>
+
+    <script type="importmap">
+      {"imports":{"@mediapipe/tasks-vision":"/vendor/mediapipe/vision_bundle.mjs","onnxruntime-web":"/vendor/onnxruntime/dist/ort.bundle.min.mjs"}}
+    </script>
+    <script type="module" src="image-privacy.mjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="portal-navigation.js"></script>
+    <script src="chat.js"></script>
+    <script src="ai-page.js"></script>
+    <script src="ads-policy.js"></script>
+    <script src="ads.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

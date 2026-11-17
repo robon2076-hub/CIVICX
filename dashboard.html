@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f2ea" />
+    <meta name="description" content="Explore local civic issues, create account-linked reports, and follow their histories on CIVICX." />
+    <title>CIVICX — Community dashboard</title>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body class="cx-dashboard">
+    <header class="app-header">
+      <a class="cx-brand" href="index.html" aria-label="CIVICX public home"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a>
+      <nav class="app-nav" aria-label="Dashboard navigation">
+        <a class="is-current" href="dashboard.html">Dashboard</a>
+        <a href="community.html">Community</a>
+        <a href="ai.html">CivicX AI</a>
+        <a id="authority-entry" data-authority-entry href="authority.html" hidden>Authority</a>
+        <a id="owner-entry" data-owner-entry href="owner.html" hidden>Owner</a>
+        <a href="https://pgportal.gov.in/" target="_blank" rel="noopener noreferrer">Official portal <span aria-hidden="true">↗</span></a>
+      </nav>
+      <div class="app-account">
+        <span class="account-caption" id="account-caption">Guest access</span>
+        <button type="button" class="account-button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+      </div>
+    </header>
+
+    <aside class="ad-rail ad-rail-left" aria-label="Sponsored civic information"><div data-ad-slot="desktop-left" hidden></div></aside>
+    <aside class="ad-rail ad-rail-right" aria-label="Sponsored civic information"><div data-ad-slot="desktop-right" hidden></div></aside>
+
+    <main class="dashboard-main">
+      <section class="dashboard-welcome">
+        <div>
+          <p class="page-overline"><span></span> CIVICX COMMUNITY</p>
+          <h1>Make local change<br /><em>visible.</em></h1>
+          <p class="welcome-copy">Explore your city, prepare a civic report, and follow every update in one place.</p>
+          <div class="welcome-actions">
+            <button type="button" class="action-dark" data-open-report>Report an issue <span aria-hidden="true">＋</span></button>
+            <a class="action-light" href="#my-reports">My reported issues <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+        <aside class="welcome-status">
+          <span class="status-spark" aria-hidden="true">✳</span>
+          <p class="status-label">YOUR ACCOUNT</p>
+          <strong id="account-name">Browsing as a guest</strong>
+          <p id="dashboard-session-status" data-civicx-auth-status>Sign in to save and retrieve reports on any device.</p>
+          <button type="button" class="status-link" data-civicx-auth-trigger data-civicx-auth-mode="signup">Create an account <span aria-hidden="true">→</span></button>
+        </aside>
+      </section>
+
+      <section class="dashboard-shortcuts" aria-labelledby="shortcuts-title">
+        <div class="section-title-row">
+          <div><p class="page-overline">YOUR CIVIC TOOLKIT</p><h2 id="shortcuts-title">Choose your next step</h2></div>
+          <p>Public information is open to everyone. Reports and AI tools require an account.</p>
+        </div>
+        <div class="shortcut-grid">
+          <button class="shortcut-card shortcut-card-accent" type="button" data-open-report>
+            <span class="shortcut-index">01</span><span class="shortcut-symbol">＋</span><strong>Report an issue</strong><small>Prepare a report and keep its reference securely in your account.</small><span class="shortcut-arrow">Start a report ↗</span>
+          </button>
+          <a class="shortcut-card" href="#city-map">
+          <span class="shortcut-index">02</span><span class="shortcut-symbol">⌖</span><strong>Explore the city map</strong><small>See public Community-linked reports and your own private report locations.</small><span class="shortcut-arrow">Open the map ↓</span>
+          </a>
+          <a class="shortcut-card" href="community.html">
+            <span class="shortcut-index">03</span><span class="shortcut-symbol">◌</span><strong>Join the community</strong><small>Read and take part in neighborhood conversations.</small><span class="shortcut-arrow">Visit community ↗</span>
+          </a>
+          <a class="shortcut-card" href="ai.html">
+            <span class="shortcut-index">04</span><span class="shortcut-symbol">✳</span><strong>Take help of AI</strong><small>Get assistance with civic questions and report wording.</small><span class="shortcut-arrow">Open CivicX AI ↗</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="dashboard-data-grid">
+        <section class="dashboard-map-card" id="city-map" aria-labelledby="map-title">
+          <div class="section-title-row map-title-row">
+            <div><p class="page-overline">PUBLIC COMMUNITY PINS · PRIVATE ACCOUNT PINS</p><h2 id="map-title">Civic Map</h2></div>
+            <div class="map-region-controls">
+              <label for="map-region-select">Map region</label>
+              <select id="map-region-select" aria-label="Choose a registered map region">
+                <option value="">Loading registered regions…</option>
+              </select>
+              <button class="map-pin-action" id="detect-map-region" type="button">Detect nearest</button>
+            </div>
+            <button class="map-pin-action" type="button" data-open-report>＋ Add a report</button>
+          </div>
+          <div id="dashboard-map" class="dashboard-map" role="application" aria-label="Map showing public Community-linked reports and your own private report locations"></div>
+          <div class="public-map-legend" id="public-map-legend" aria-label="Public report category legend"></div>
+          <p class="map-caption" id="map-caption">Public pins show reports shared to the Civic X Community. Your own report pins remain private to your account.</p>
+          <p class="public-map-status" id="public-map-status" role="status" aria-live="polite">Loading public report pins for this map area…</p>
+        </section>
+
+        <section class="dashboard-summary" aria-label="Your report summary">
+          <p class="page-overline">ACCOUNT SUMMARY</p>
+          <div class="summary-metric"><span>Reports saved</span><strong id="summary-total">—</strong></div>
+          <div class="summary-metric"><span>Pending</span><strong id="summary-pending">—</strong></div>
+          <div class="summary-metric"><span>Under review</span><strong id="summary-under-review">—</strong></div>
+          <div class="summary-metric"><span>Resolved</span><strong id="summary-resolved">—</strong></div>
+          <div class="summary-metric"><span>Cannot be resolved</span><strong id="summary-unresolved">—</strong></div>
+          <div class="summary-metric"><span>Resolution disputed</span><strong id="summary-disputed">—</strong></div>
+          <div class="summary-metric"><span>Reopened</span><strong id="summary-reopened">—</strong></div>
+          <p class="summary-note">Your report records and full histories are fetched from the CivicX database after sign-in. They are not stored as report data in this browser.</p>
+          <a href="track.html" class="summary-link">Track an official complaint <span aria-hidden="true">↗</span></a>
+        </section>
+      </section>
+
+      <section class="city-condition-links" aria-label="Local conditions">
+        <p class="page-overline">CITY CONDITIONS</p>
+        <a href="weather.html"><span>Weather forecast</span><strong>View local conditions ↗</strong></a>
+        <a href="air-quality.html"><span>Air quality</span><strong>View the AQI outlook ↗</strong></a>
+      </section>
+
+      <section class="my-reports-section" id="my-reports" aria-labelledby="my-reports-title">
+        <div class="section-title-row">
+          <div><p class="page-overline">ACCOUNT-LINKED RECORDS</p><h2 id="my-reports-title">My reported issues</h2></div>
+          <button class="action-dark compact-action" type="button" data-open-report>＋ Report an issue</button>
+        </div>
+        <p class="reports-status" id="reports-status" role="status" aria-live="polite">Checking your account…</p>
+        <div class="reports-empty" id="reports-empty" hidden>
+          <strong id="reports-empty-title">No reports to show</strong>
+          <p id="reports-empty-copy">Sign in to retrieve your previous reports, or create a report to get started.</p>
+          <button type="button" class="action-light" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in to view reports</button>
+        </div>
+        <div class="report-list" id="report-list" aria-live="polite"></div>
+      </section>
+
+      <section class="official-note">
+        <span class="official-note-mark" aria-hidden="true">↗</span>
+        <div><strong>Prepared in CivicX does not mean filed with a government authority.</strong><p>When you are ready, continue to the official portal and submit the information there. CivicX does not submit or verify government complaints.</p></div>
+        <a href="https://pgportal.gov.in/Home/LodgeGrievance" target="_blank" rel="noopener noreferrer">Open CPGRAMS <span aria-hidden="true">↗</span></a>
+      </section>
+    </main>
+
+    <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-dialog-title">
+      <form method="dialog" class="dialog-close-form"><button type="submit" aria-label="Close report form">×</button></form>
+      <p class="page-overline">A REPORT IS SAVED TO YOUR ACCOUNT</p>
+      <h2 id="report-dialog-title">What needs attention?</h2>
+      <p class="dialog-intro">Your report is private to your account. CivicX will not file it with an authority.</p>
+      <form id="report-form">
+        <label for="report-category">Issue type</label>
+        <select id="report-category" required>
+          <option value="" selected disabled>Choose an issue</option>
+          <option value="Pothole">Road damage / pothole</option>
+          <option value="Garbage">Garbage / sanitation</option>
+          <option value="Water leakage">Water leakage</option>
+          <option value="Streetlight">Streetlight</option>
+          <option value="Electricity related problem">Electricity related problem</option>
+        </select>
+        <label for="report-description">Describe what you noticed</label>
+        <textarea id="report-description" rows="4" maxlength="2500" required placeholder="Include useful details. Avoid personal information."></textarea>
+        <label for="report-location">Street, area, or nearby landmark</label>
+        <input id="report-location" type="text" maxlength="160" required placeholder="For example, near the community hall" />
+        <label for="report-city">City</label>
+        <select id="report-city" required>
+          <option value="" selected disabled>Loading registered jurisdictions…</option>
+        </select>
+        <div class="location-picker-row">
+          <button type="button" class="action-light" id="choose-pin">Choose a point on the map</button>
+          <button type="button" class="action-light" id="use-current-location">Use my location</button>
+        </div>
+        <label for="report-photo">Issue photo (optional)</label>
+        <div class="report-photo-controls">
+          <input id="report-photo" type="file" accept="image/jpeg,image/png,image/webp" />
+          <button type="button" class="action-light" id="remove-report-photo" hidden>Remove photo</button>
+        </div>
+        <div class="report-photo-preview" id="report-photo-preview" hidden>
+          <img id="report-photo-thumbnail" alt="Locally redacted issue photo preview" />
+          <p id="report-photo-status" role="status" aria-live="polite"></p>
+        </div>
+        <p class="report-photo-note">Faces and vehicle plates are redacted on this device before the photo is saved. Review the redacted preview.</p>
+        <label for="report-community-choice">Do you also want to post this issue in the Civic X Community?</label>
+        <select id="report-community-choice">
+        <option value="no" selected>No</option>
+        <option value="yes" disabled>Yes</option>
+        </select>
+        <p class="report-photo-note" id="report-community-availability">Community cross-posting will be available after the database migration is applied.</p>
+        <div id="report-community-fields" hidden>
+        <p class="report-photo-note">Your report details will be reused. Only Community-specific details are requested below.</p>
+        <label for="report-community-category">Community category</label>
+        <select id="report-community-category"></select>
+        <div id="report-community-profile-fields" hidden>
+          <label for="report-community-display-name">Community display name</label>
+          <input id="report-community-display-name" type="text" minlength="2" maxlength="40" autocomplete="nickname" />
+          <label for="report-community-locality">Broad Community locality</label>
+          <input id="report-community-locality" type="text" minlength="2" maxlength="80" placeholder="For example, Park Circus" />
+        </div>
+        <p class="report-photo-note" id="report-community-profile-status" role="status" aria-live="polite"></p>
+        <p class="report-photo-note" id="report-community-public-notice" hidden>
+          This post is public to everyone, including visitors. It will include the issue title and description (which may contain location details), selected city, broad Community locality, and, if attached, the redacted photo. The separate street/area/landmark field will not be copied.
+        </p>
+        </div>
+        <p class="selected-coordinate" id="selected-coordinate">A map point is required to save this report.</p>
+        <input type="hidden" id="report-latitude" />
+        <input type="hidden" id="report-longitude" />
+        <p class="form-feedback" id="report-error" role="alert" hidden></p>
+        <div class="report-dialog-actions">
+          <button type="button" class="action-light" id="cancel-report">Cancel</button>
+          <button type="submit" class="action-dark" id="save-report">Save report</button>
+        </div>
+      </form>
+    </dialog>
+
+    <aside class="civicx-chat-widget dashboard-floating-ai" id="dashboard-floating-ai" aria-label="CIVICX AI assistant" hidden>
+      <section class="civicx-chat-panel" id="civicx-chat-panel" role="dialog" aria-labelledby="civicx-chat-title" hidden>
+        <header class="civicx-chat-header">
+          <div class="civicx-chat-avatar" aria-hidden="true">✧</div>
+          <div><h2 id="civicx-chat-title">CIVICX Assistant</h2><p>Helpful civic information, with limits</p></div>
+          <button class="civicx-chat-new" id="civicx-chat-new" type="button">New chat</button>
+          <button class="civicx-chat-close" id="civicx-chat-close" type="button" aria-label="Close assistant">×</button>
+        </header>
+        <p class="civicx-chat-notice" id="civicx-chat-notice">Your text is sent to Google Gemini. Locally redacted photos are accepted only as supporting evidence; they are not analyzed or stored by CivicX. Avoid personal details. CIVICX cannot file or verify complaints.</p>
+        <div class="civicx-chat-welcome" id="civicx-chat-welcome">
+          <p>Hi, I’m your CivicX AI Assistant. What civic question can I help with?</p>
+          <div class="civicx-chat-suggestions" aria-label="Suggested questions">
+            <button type="button" data-chat-prompt="How do I prepare a clear civic issue report?">How do I prepare a clear report?</button>
+            <button type="button" data-chat-prompt="What details help explain a road repair issue?">What details help explain a road issue?</button>
+            <button type="button" data-chat-prompt="How do I follow a complaint filed through CPGRAMS?">How do I follow a CPGRAMS complaint?</button>
+          </div>
+        </div>
+        <div class="civicx-chat-messages" id="civicx-chat-messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+        <div class="civicx-chat-attachment" id="civicx-chat-attachment" hidden>
+          <img id="civicx-chat-thumbnail" alt="Locally redacted issue photo preview" />
+          <span id="civicx-chat-attachment-label">Redacted photo ready. Review the preview before sending.</span>
+          <button class="civicx-chat-remove-attachment" id="civicx-chat-remove-attachment" type="button" aria-label="Remove attached photo">×</button>
+        </div>
+        <form class="civicx-chat-form" id="civicx-chat-form">
+          <label class="civicx-chat-attach" for="civicx-chat-file" title="Attach and locally redact a photo"><span aria-hidden="true">＋</span><span class="sr-only">Attach civic issue photo</span></label>
+          <input class="sr-only" id="civicx-chat-file" type="file" accept="image/jpeg,image/png,image/webp" />
+          <label class="sr-only" for="civicx-chat-input">Message the CIVICX Assistant</label>
+          <textarea id="civicx-chat-input" rows="2" maxlength="1200" placeholder="Ask a civic question…"></textarea>
+          <button class="civicx-chat-send" id="civicx-chat-send" type="submit" aria-label="Send message">Send</button>
+        </form>
+        <p class="civicx-chat-status" id="civicx-chat-status" role="status" aria-live="polite">Chat history is stored only for this browser tab.</p>
+      </section>
+      <button class="civicx-chat-launcher" id="civicx-chat-launcher" type="button" data-chat-open aria-expanded="false" aria-controls="civicx-chat-panel"><span aria-hidden="true">✧</span><span>Ask CivicX AI</span></button>
+    </aside>
+
+    <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Public access for exploring. Account access for saving.</span></footer>
+
+    <script type="importmap">
+      {"imports":{"@mediapipe/tasks-vision":"/vendor/mediapipe/vision_bundle.mjs","onnxruntime-web":"/vendor/onnxruntime/dist/ort.bundle.min.mjs"}}
+    </script>
+    <script type="module" src="image-privacy.mjs"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="portal-navigation.js"></script>
+    <script src="portal-session.js"></script>
+    <script src="civicx-community-posts.js"></script>
+    <script src="civicx-reports.js"></script>
+    <script src="civicx-jurisdictions.js"></script>
+    <script src="chat.js"></script>
+    <script src="dashboard-page.js"></script>
+    <script src="ads-policy.js"></script>
+    <script src="ads.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

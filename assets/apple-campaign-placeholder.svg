@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0f3f5"/>
+      <stop offset="1" stop-color="#d9e1e7"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="420" rx="26" fill="url(#g)"/>
+  <circle cx="320" cy="170" r="52" fill="#fff" opacity=".8"/>
+  <text x="320" y="185" fill="#4a5963" font-family="Arial,sans-serif" font-size="54" text-anchor="middle">A</text>
+  <text x="320" y="285" fill="#35434c" font-family="Arial,sans-serif" font-size="23" font-weight="700" text-anchor="middle">APPLE · SAMPLE PLACEHOLDER</text>
+  <text x="320" y="326" fill="#64727a" font-family="Arial,sans-serif" font-size="17" text-anchor="middle">Replace with approved creative</text>
+</svg>

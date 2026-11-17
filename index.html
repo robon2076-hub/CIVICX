@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0e14" />
+    <meta name="description" content="CIVICX helps people make local civic issues visible and follow what happens next." />
+    <title>CIVICX — Your city, your voice</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="cx-landing cx-home">
+    <nav class="cx-home-nav" aria-label="Main navigation">
+      <a class="cx-home-logo" href="index.html" aria-label="CIVICX home"><span class="cx-home-logo-mark" aria-hidden="true">C</span><span>CIVICX</span></a>
+      <div class="cx-home-nav-links">
+        <a href="#tutorial">Tutorial</a>
+        <a href="#explore">Explore</a>
+        <a href="community.html">Community</a>
+        <a href="#contact">Contact us</a>
+        <a data-authority-entry href="authority.html" hidden>Authority</a>
+        <a data-owner-entry href="owner.html" hidden>Owner</a>
+      </div>
+      <div class="cx-home-auth-actions">
+        <button class="cx-home-login" type="button" data-auth="login" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+        <button class="cx-home-signup" type="button" data-auth="signup" data-civicx-auth-trigger data-civicx-auth-mode="signup">Sign up</button>
+      </div>
+    </nav>
+
+    <div class="cx-home-content" id="home">
+      <main>
+        <header class="cx-home-hero hero" id="top">
+          <div class="hero__bg" aria-hidden="true">
+            <div class="blob blob--1"></div>
+            <div class="blob blob--2"></div>
+            <div class="blob blob--3"></div>
+            <div class="hero__grid"></div>
+            <div class="hero__scan"></div>
+            <span class="pin" style="left:18%;top:62%"></span>
+            <span class="pin" style="left:78%;top:30%;animation-delay:-3s"></span>
+            <span class="pin" style="left:60%;top:76%;animation-delay:-6s"></span>
+            <div class="hero__shade"></div>
+            <div class="road">
+              <span class="car" style="animation-duration:11s;animation-delay:-1s">🚌</span>
+              <span class="car" style="animation-duration:7s;animation-delay:-3s">🚗</span>
+              <span class="car" style="animation-duration:9s;animation-delay:-6s">🚓</span>
+              <span class="car" style="animation-duration:14s;animation-delay:-9s">🚚</span>
+            </div>
+            <span class="rise" style="left:10%">📍</span>
+            <span class="rise" style="left:26%;animation-delay:-3s">💬</span>
+            <span class="rise" style="left:44%;animation-delay:-6s">🗳️</span>
+            <span class="rise" style="left:62%;animation-delay:-1.5s">🏗️</span>
+            <span class="rise" style="left:78%;animation-delay:-4.5s">✨</span>
+            <span class="rise" style="left:90%;animation-delay:-7.5s">📍</span>
+            <div class="chip" style="left:5%;top:28%">📍 Prepare a local report</div>
+            <div class="chip" style="right:5%;top:24%;animation-delay:-2s">🗳️ Join a community discussion</div>
+            <div class="chip" style="left:7%;top:58%;animation-delay:-3.5s">🧾 Keep a report history</div>
+            <div class="chip" style="right:6%;top:55%;animation-delay:-1s">🏛️ Follow up with the right portal</div>
+          </div>
+          <video id="landing-video" playsinline muted preload="metadata" aria-hidden="true" hidden></video>
+          <div id="landing-video-placeholder" class="visually-hidden" aria-hidden="true" hidden></div>
+
+          <div class="hero__content">
+            <span class="cx-home-pill">A civic platform for everyone</span>
+            <h1>Your city, <span class="shimmer">your voice</span>, one tap away.</h1>
+            <p>Make local issues easier to understand, bring neighbours into the conversation, and keep track of the next step.</p>
+            <div class="cx-home-cta">
+              <a class="button button-primary btn btn--primary btn--lg btn--pulse" href="dashboard.html?guest=1">Explore as a guest <span aria-hidden="true">↗</span></a>
+              <button class="button button-secondary" type="button" data-auth="signup" data-civicx-auth-trigger data-civicx-auth-mode="signup">Create an account</button>
+            </div>
+            <p class="cx-home-footnote">CivicX helps organize information. Reports must be filed with the relevant authority separately.</p>
+            <div class="cx-home-stats" aria-label="CivicX features">
+              <span><strong>Report</strong>Prepare an issue</span>
+              <span><strong>Discuss</strong>Connect with neighbours</span>
+              <span><strong>Follow up</strong>Keep the next step clear</span>
+            </div>
+          </div>
+
+          <div class="cx-home-video">
+            <div class="cx-home-video-ident" aria-live="polite">
+              <span class="cx-home-video-number" id="video-number">01</span>
+              <span class="cx-home-video-ident-copy">
+                <strong id="video-title">A civic issue starts with us</strong>
+                <small id="video-description">A 20-second civic awareness video.</small>
+              </span>
+              <span class="cx-home-video-tag" id="video-stage-tag">VIDEO 1 OF 2</span>
+            </div>
+            <div class="cx-home-video-controls" aria-label="Background video controls">
+              <span class="video-time" id="video-time" aria-live="off">0:00 / 0:20</span>
+              <input class="video-progress" id="video-progress" type="range" min="0" max="20" value="0" aria-label="Video progress" />
+              <button type="button" class="video-control-button" id="video-mute" aria-label="Unmute video" aria-pressed="true">◖̸</button>
+              <button type="button" class="video-control-button video-next-button" id="video-next" aria-label="Play next video">Next <span aria-hidden="true">→</span></button>
+            </div>
+            <p class="visually-hidden" id="video-status" role="status" aria-live="polite"></p>
+          </div>
+        </header>
+
+        <section class="cx-home-section" id="tutorial" aria-labelledby="tutorial-title">
+          <div class="cx-home-section-heading reveal">
+            <p class="eyebrow"><span class="eyebrow-dot"></span> A QUICK CIVICX WALKTHROUGH</p>
+            <h2 id="tutorial-title">New here? Start with the next step.</h2>
+            <p>Explore what CivicX can help you organize. Government filing and status checks remain on the relevant official portal.</p>
+          </div>
+          <div class="cx-tutorial-layout">
+            <div class="cx-tutorial-stage reveal" id="cx-tutorial-stage">
+              <button class="cx-tutorial-play" id="cx-tutorial-toggle" type="button" aria-label="Pause tutorial" aria-pressed="true">❚❚</button>
+              <div class="cx-tutorial-phone" aria-live="polite">
+                <span class="cx-tutorial-badge" id="cx-tutorial-badge">CIVICX</span>
+                <div class="cx-tutorial-icon" id="cx-tutorial-icon" aria-hidden="true">📍</div>
+                <h3 id="cx-tutorial-phone-title">Prepare a report</h3>
+                <p id="cx-tutorial-phone-copy">Describe the issue and add its location.</p>
+                <a class="button" id="cx-tutorial-phone-action" href="dashboard.html?guest=1">Open dashboard</a>
+              </div>
+              <div class="cx-tutorial-copy">
+                <h3 id="cx-tutorial-step-title">Prepare a clear report</h3>
+                <p id="cx-tutorial-step-copy">Draft a local issue report with useful context. Sign in if you want to save an account-linked report.</p>
+              </div>
+              <div class="cx-tutorial-progress" aria-hidden="true"><span id="cx-tutorial-progress"></span></div>
+            </div>
+            <div class="cx-tutorial-list" id="cx-tutorial-list" aria-label="Tutorial steps"></div>
+          </div>
+        </section>
+
+        <section class="cx-home-section" id="explore" aria-labelledby="explore-title">
+          <div class="cx-home-section-heading reveal">
+            <p class="eyebrow"><span class="eyebrow-dot"></span> CIVICX FEATURES</p>
+            <h2 id="explore-title">See what you can do.</h2>
+            <p>Open the existing CivicX tools and keep the distinction between community updates and official action clear.</p>
+          </div>
+          <div class="cx-explore-grid">
+            <a class="cx-explore-card cx-explore-card-one reveal" href="dashboard.html?guest=1"><span aria-hidden="true">📍</span><h3>Prepare a report</h3><p>Add issue details and location. An account is required to save it.</p></a>
+            <a class="cx-explore-card cx-explore-card-two reveal" href="community.html"><span aria-hidden="true">💬</span><h3>Community</h3><p>Discuss local problems with neighbours. Discussions are not official complaints.</p></a>
+            <a class="cx-explore-card cx-explore-card-three reveal" href="track.html"><span aria-hidden="true">🧾</span><h3>Track a complaint</h3><p>Keep your own record and check official status with the relevant portal.</p></a>
+            <a class="cx-explore-card cx-explore-card-four reveal" href="ai.html"><span aria-hidden="true">✧</span><h3>CivicX AI</h3><p>Get guidance for civic questions and report wording after signing in.</p></a>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <main class="cx-contact-view" id="contact" hidden>
+      <section class="cx-home-section cx-home-contact" aria-labelledby="contact-title">
+        <div class="cx-home-section-heading reveal">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> GET IN TOUCH</p>
+          <h2 id="contact-title">Contact us.</h2>
+          <p>Questions, ideas or feedback? We would love to hear from you.</p>
+        </div>
+        <div class="cx-contact-grid">
+          <div class="cx-contact-info">
+            <a class="cx-contact-card reveal" href="mailto:rajshreechaitanya123@gmail.com"><span class="cx-contact-card-icon" aria-hidden="true">✉️</span><span class="cx-contact-card-copy"><strong>Email</strong><span>rajshreechaitanya123@gmail.com</span></span></a>
+            <a class="cx-contact-card reveal" href="tel:+917980614047"><span class="cx-contact-card-icon" aria-hidden="true">📞</span><span class="cx-contact-card-copy"><strong>Phone</strong><span>+91 79806 14047</span></span></a>
+            <div class="cx-contact-card reveal"><span class="cx-contact-card-icon" aria-hidden="true">🕘</span><span class="cx-contact-card-copy"><strong>Hours</strong><span>Mon to Sat, 9am to 6pm</span></span></div>
+            <div class="cx-contact-card reveal"><span class="cx-contact-card-icon" aria-hidden="true">📍</span><span class="cx-contact-card-copy"><strong>Office</strong><span>22, Camac Street, Block C - 6th Floor, Above Pantaloons, Kolkata, West Bengal 700016, India</span></span></div>
+          </div>
+          <form class="cx-contact-form reveal" id="cx-contact-form">
+            <label for="cx-contact-name">Your name</label>
+            <input id="cx-contact-name" name="name" autocomplete="name" required placeholder="Full name" />
+            <label for="cx-contact-email">Email</label>
+            <input id="cx-contact-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+            <label for="cx-contact-message">Message</label>
+            <textarea id="cx-contact-message" name="message" required maxlength="4000" placeholder="How can we help?"></textarea>
+            <button class="button button-primary" type="submit">Continue to email <span aria-hidden="true">↗</span></button>
+            <p class="cx-contact-status" id="cx-contact-status" role="status" aria-live="polite">Your email app will open with the message ready for you to review and send.</p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="cx-home-footer">
+      <span>© 2026 CIVICX</span>
+      <a href="#contact">Contact us</a>
+      <a href="dashboard.html?guest=1">Explore CivicX</a>
+    </footer>
+
+    <script src="video-config.js"></script>
+    <script src="landing-video.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="portal-navigation.js"></script>
+    <script src="landing-page.js"></script>
+    <script src="front-page.js"></script>
+    <script src="/theme.js"></script>
+  </body>
+</html>

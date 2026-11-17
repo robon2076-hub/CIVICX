@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f5" />
+    <title>CIVICX — Track a complaint</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="track-page">
+    <main class="track-shell">
+      <header class="track-header">
+        <a class="brand" href="dashboard.html" aria-label="CIVICX dashboard">
+          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 22.5 15.8 5l11.1 17.5H5Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M11 22.5 16 14l5.2 8.5M9 16.5h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+          <span class="brand-name">civic<span>x</span></span>
+        </a>
+        <div class="track-header-actions">
+          <a class="sponsor-admin-back" href="dashboard.html">← CivicX dashboard</a>
+          <div class="community-header-actions">
+            <button class="button button-secondary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+            <button class="button button-primary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="signup">Sign up</button>
+          </div>
+        </div>
+      </header>
+      <section class="track-card">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> COMPLAINT & RESOLUTION TRACKER</p>
+        <h1>Track your complaint<span class="heading-period">.</span></h1>
+        <p>Look up any CivicX registration number (e.g. <strong>CX-2418</strong>) or official CPGRAMS portal reference to see whether the issue has been resolved or is in progress, along with direct options to track on the official government portal.</p>
+        
+        <div class="track-samples-bar" id="track-samples-bar">
+          <span class="track-samples-label">Quick sample checks:</span>
+          <div class="track-chips">
+            <button type="button" class="track-chip" data-sample="CX-2418">CX-2418 <small>(In progress)</small></button>
+            <button type="button" class="track-chip" data-sample="CX-2410">CX-2410 <small>(Resolved)</small></button>
+            <button type="button" class="track-chip" data-sample="CX-2413">CX-2413 <small>(Resolved)</small></button>
+            <button type="button" class="track-chip" data-sample="CX-2416">CX-2416 <small>(Assigned)</small></button>
+            <button type="button" class="track-chip" data-sample="CX-2415">CX-2415 <small>(Submitted)</small></button>
+          </div>
+        </div>
+
+        <div class="track-account-panel">
+          <span class="track-account-mark" aria-hidden="true">◎</span>
+          <p data-civicx-auth-status>Sign in to retrieve private CivicX reports and tracking records across devices.</p>
+        </div>
+
+        <form class="track-form" id="track-form">
+          <label class="field-label" for="track-registration">CivicX Registration Number or CPGRAMS Reference</label>
+          <div class="track-input-row">
+            <input id="track-registration" maxlength="80" autocomplete="off" required placeholder="Enter number (e.g. CX-2418 or CPGRAMS reference)" />
+            <button class="button button-primary" type="submit">Track complaint</button>
+          </div>
+          <p class="privacy-note">All reports submitted in CivicX are automatically registered and searchable. No sign-in required to track.</p>
+        </form>
+
+        <p class="track-error" id="track-error" role="alert" hidden></p>
+        <section class="track-result" id="track-result" hidden aria-live="polite"></section>
+
+        <section class="cpgrams-official-box" id="cpgrams-official-box">
+          <div class="cpgrams-box-header">
+            <span class="cpgrams-badge">OFFICIAL GOVERNMENT PORTAL</span>
+            <h3>Check Official CPGRAMS Tracking</h3>
+            <p>If you or someone lodged this grievance on the central government portal, you can verify official ministry and department action directly on pgportal.gov.in.</p>
+          </div>
+          <div class="official-links">
+            <a class="button button-primary" id="official-cpgrams-btn" href="https://pgportal.gov.in/Status" target="_blank" rel="noopener noreferrer">Check on official CPGRAMS tracker ↗</a>
+            <a class="button button-secondary" href="https://pgportal.gov.in/Home/LodgeGrievance" target="_blank" rel="noopener noreferrer">Lodge grievance on CPGRAMS ↗</a>
+            <a href="https://pgportal.gov.in/" target="_blank" rel="noopener noreferrer">CPGRAMS home ↗</a>
+          </div>
+        </section>
+
+        <form class="track-form track-save-form" id="save-status-form" hidden>
+          <div>
+            <h2>Record a status update</h2>
+            <p>After checking CPGRAMS or local municipal updates, record the latest status here to keep an organized timeline.</p>
+          </div>
+          <label class="field-label" for="track-status">Status shown on portal or authority</label>
+          <select id="track-status" required>
+            <option value="" selected disabled>Choose a status</option>
+            <option value="registered">Registered</option>
+            <option value="under_review">Under review</option>
+            <option value="in_progress">In progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <label class="field-label" for="track-remarks">Remarks or notes (optional)</label>
+          <textarea id="track-remarks" rows="2" maxlength="1200" placeholder="e.g. Road repaired by PWD team; inspected by local ward"></textarea>
+          <label class="field-label" for="track-date">Date shown by authority (optional)</label>
+          <input id="track-date" type="date" />
+          <label class="field-label" for="track-document">Official document link (optional)</label>
+          <input id="track-document" type="url" maxlength="500" placeholder="https://pgportal.gov.in/…" />
+          <button class="button button-secondary" type="submit">Save update to record</button>
+        </form>
+      </section>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Government complaint status must be checked with the relevant official portal.</span></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="civicx-reports.js"></script>
+    <script src="track.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

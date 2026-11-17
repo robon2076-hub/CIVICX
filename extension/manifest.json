@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "CIVICX CPGRAMS Assistant",
+  "version": "0.1.0",
+  "description": "Fills selected CivicX issue fields on CPGRAMS. It never submits forms or handles verification.",
+  "permissions": ["activeTab"],
+  "host_permissions": ["https://pgportal.gov.in/*"],
+  "action": {
+    "default_title": "CIVICX CPGRAMS Assistant",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://pgportal.gov.in/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

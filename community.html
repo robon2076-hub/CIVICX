@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f5" />
+    <meta name="description" content="Neighbourhood discussions about local civic problems and practical improvements." />
+    <title>Civic Community | CIVICX</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="environment-page community-page">
+    <header class="environment-topbar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark">C</span><span class="brand-name">civic<span>x</span></span></a>
+      <div class="community-header-actions">
+        <a class="environment-back" href="dashboard.html">← CivicX dashboard</a>
+        <a class="environment-back" data-authority-entry href="authority.html" hidden>Authority</a>
+        <a class="environment-back" data-owner-entry href="owner.html" hidden>Owner</a>
+        <button class="button button-secondary" id="community-auth-open" type="button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+        <button class="button button-primary" type="button" data-civicx-auth-trigger data-civicx-auth-mode="signup">Sign up</button>
+      </div>
+    </header>
+    <aside class="ad-rail ad-rail-left" aria-label="Sponsored civic information"><div data-ad-slot="desktop-left" hidden></div></aside>
+    <aside class="ad-rail ad-rail-right" aria-label="Sponsored civic information"><div data-ad-slot="desktop-right" hidden></div></aside>
+    <main class="environment-shell community-shell">
+      <p class="eyebrow"><span class="eyebrow-dot"></span> LOCAL CIVIC CONVERSATIONS</p>
+      <h1>Civic Community</h1>
+      <p class="environment-intro">Discuss neighbourhood problems, exchange useful updates and work on practical solutions. A discussion is not an official complaint.</p>
+      <div class="community-status" id="community-status" role="status" aria-live="polite">Checking community service configuration…</div>
+      <div class="community-notifications" id="community-notifications" aria-live="polite"></div>
+      <section class="community-intro-card">
+        <strong id="community-user-label">Sign in to join the conversation</strong>
+        <span id="community-user-location">Choose a broad locality in your profile. CivicX never publishes precise addresses here.</span>
+      </section>
+      <section class="community-controls" aria-label="Discussion filters">
+        <label><span>City</span><input id="feed-city" list="indian-cities-list" placeholder="All cities" maxlength="80" /></label>
+        <label><span>Neighbourhood</span><input id="feed-locality" placeholder="All localities" maxlength="80" /></label>
+        <label><span>Search discussions</span><input id="feed-search" type="search" placeholder="Search posts and replies" maxlength="100" /></label>
+        <label><span>Category</span>
+          <select id="feed-category">
+            <option value="">All civic topics</option>
+            <option>Road and Infrastructure</option><option>Garbage and Sanitation</option>
+            <option>Water and Drainage</option><option>Pollution and Environment</option>
+            <option>Public Safety</option><option>Government Services</option>
+            <option>General Civic Discussions</option><option>Suggestions and Solutions</option>
+          </select>
+        </label>
+      </section>
+      <datalist id="indian-cities-list">
+        <option value="Kolkata"></option>
+        <option value="New Delhi"></option>
+        <option value="Mumbai"></option>
+        <option value="Bengaluru"></option>
+        <option value="Chennai"></option>
+        <option value="Hyderabad"></option>
+        <option value="Pune"></option>
+        <option value="Ahmedabad"></option>
+        <option value="Jaipur"></option>
+        <option value="Lucknow"></option>
+        <option value="Chandigarh"></option>
+        <option value="Surat"></option>
+        <option value="Kochi"></option>
+        <option value="Indore"></option>
+        <option value="Patna"></option>
+        <option value="Bhubaneswar"></option>
+      </datalist>
+      <section class="community-compose">
+        <div class="community-panel-heading"><div><h2>Start a discussion</h2><p>Keep it civic-focused. Avoid names, phone numbers, exact home addresses and identity details.</p></div></div>
+        <form id="community-post-form">
+          <div class="community-profile-fields">
+            <label><span>Display name</span><input id="profile-display-name" required minlength="2" maxlength="40" autocomplete="nickname" /></label>
+            <label><span>Your city</span><input id="profile-city" list="indian-cities-list" required minlength="2" maxlength="80" placeholder="Your city" /></label>
+            <label><span>Your neighbourhood</span><input id="profile-locality" required minlength="2" maxlength="80" placeholder="For example, Park Circus" /></label>
+          </div>
+          <label class="sr-only" for="post-category">Discussion category</label>
+          <select id="post-category" required>
+            <option value="" selected disabled>Choose a civic discussion category</option>
+            <option>Road and Infrastructure</option><option>Garbage and Sanitation</option>
+            <option>Water and Drainage</option><option>Pollution and Environment</option>
+            <option>Public Safety</option><option>Government Services</option>
+            <option>General Civic Discussions</option><option>Suggestions and Solutions</option>
+          </select>
+          <label class="sr-only" for="post-body">Discussion text</label>
+          <textarea id="post-body" required minlength="10" maxlength="3000" rows="4" placeholder="What is happening in your neighbourhood? Share helpful context or a constructive suggestion."></textarea>
+          <div class="community-post-options">
+            <label class="community-file"><span>Attach a relevant photo (max 5 MB; public to visitors)</span><input id="post-image" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+            <label><span>Link a CivicX report (optional)</span><input id="post-report-id" maxlength="80" placeholder="CX reference, if you have one" /></label>
+            <button class="button button-primary" type="submit" id="community-post-submit">Post discussion</button>
+          </div>
+          <p class="community-form-message" id="community-form-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+      <div class="community-feed-heading">
+        <div><h2>Neighbourhood feed</h2><p id="community-feed-subtitle">Recent civic discussions</p></div>
+        <select id="feed-sort" aria-label="Sort discussions"><option value="recent">Recently active</option><option value="popular">Trending locally</option></select>
+      </div>
+      <section class="community-feed" id="community-feed" aria-live="polite"></section>
+      <section class="community-moderation" id="moderation-panel" hidden>
+        <h2>Moderator review queue</h2><div id="moderation-queue"></div>
+      </section>
+      <p class="environment-disclaimer">Posts are public to CivicX community visitors. Email and phone verification are used only for sign-in and are not displayed in public profiles. Community discussions do not file or update government complaints.</p>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="index.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Community discussions do not file or update government complaints.</span></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="portal-navigation.js"></script>
+    <script src="community-votes.js"></script>
+    <script src="civicx-community-posts.js"></script>
+    <script src="community.js"></script>
+    <script src="ads-policy.js"></script>
+    <script src="ads.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>

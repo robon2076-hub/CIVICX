@@ -1,0 +1,26 @@
+.ad-rail {
+  position: fixed;
+  z-index: 5;
+  top: 150px;
+  width: 140px;
+}
+
+.ad-rail-left { left: max(12px, calc((100vw - 1500px) / 2)); }
+.ad-rail-right { right: max(12px, calc((100vw - 1500px) / 2)); }
+.ad-rail [data-ad-slot] { width: 100%; }
+.ad-rail .ad-card { overflow: hidden; border: 1px solid #dfe4da; border-radius: 8px; background: #fbfaf6; box-shadow: 0 8px 24px rgb(22 37 28 / 8%); }
+.ad-rail .ad-creative { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
+.ad-rail .ad-copy { display: grid; gap: 5px; padding: 11px; }
+.ad-rail .ad-label { color: #78837a; font-size: 8px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+.ad-rail .ad-brand { color: #34483a; font-size: 10px; font-weight: 700; }
+.ad-rail .ad-headline { color: #284f35; font-size: 10px; line-height: 1.45; text-decoration: none; }
+.ad-rail .ad-close { position: absolute; top: 5px; right: 5px; width: 23px; height: 23px; border: 0; border-radius: 50%; background: rgb(255 255 255 / 90%); color: #24352a; font-size: 16px; cursor: pointer; }
+.ad-rail .ad-mute { width: 100%; border: 0; background: #eef1e8; padding: 5px; color: #4a604c; font-size: 9px; cursor: pointer; }
+
+@media (max-width: 1759px) {
+  .ad-rail { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-rail video { display: none; }
+}

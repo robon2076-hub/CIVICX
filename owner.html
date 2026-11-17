@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f2ea" />
+    <meta name="description" content="Restricted CivicX owner workspace for global oversight and authority jurisdiction assignments." />
+    <title>CIVICX Owner Portal</title>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body class="cx-dashboard">
+    <header class="app-header">
+      <a class="cx-brand" href="dashboard.html" aria-label="CIVICX dashboard"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a>
+      <nav class="app-nav" aria-label="Main navigation">
+        <a href="dashboard.html">Dashboard</a>
+        <a data-authority-entry href="authority.html" hidden>Authority</a>
+        <a class="is-current" data-owner-entry href="owner.html" hidden>Owner</a>
+      </nav>
+      <div class="app-account">
+        <span class="account-caption" id="owner-account">Checking account…</span>
+        <button type="button" class="account-button" data-civicx-auth-trigger data-civicx-auth-mode="login">Log in</button>
+      </div>
+    </header>
+    <main class="dashboard-main portal-main">
+      <section class="dashboard-welcome portal-welcome">
+        <div>
+          <p class="page-overline"><span></span> RESTRICTED OWNER WORKSPACE</p>
+          <h1>Platform-wide<br /><em>oversight.</em></h1>
+          <p class="welcome-copy">Global visibility is limited to authenticated accounts on the server-side owner allowlist. Jurisdiction assignments are validated and audited.</p>
+        </div>
+        <aside class="welcome-status">
+          <span class="status-spark" aria-hidden="true">✦</span>
+          <p class="status-label">PRIVILEGED ACCESS</p>
+          <strong>Explicit allowlist</strong>
+          <p>The Owner key alone never grants global access.</p>
+        </aside>
+      </section>
+      <p class="portal-status" id="owner-status" role="status" aria-live="polite">Checking your signed-in account…</p>
+      <section class="portal-key-panel" id="owner-key-panel" hidden>
+        <h2>Unlock owner access</h2>
+        <p>Use your signed-in account from the server-side owner allowlist and the Owner master key. The key stays in memory only and is cleared when you sign out.</p>
+        <form id="owner-key-form">
+          <label for="owner-master-key">Owner master key</label>
+          <input id="owner-master-key" type="password" autocomplete="off" spellcheck="false" maxlength="512" required />
+          <button type="submit" class="action-dark">Verify and open portal</button>
+        </form>
+      </section>
+      <section class="portal-workspace" id="owner-workspace" hidden>
+        <section class="portal-owner-settings" aria-labelledby="owner-assignments-title">
+          <div class="section-title-row">
+            <div><p class="page-overline">ACCESS ADMINISTRATION</p><h2 id="owner-assignments-title">Authority jurisdiction assignments</h2></div>
+            <button type="button" class="action-light compact-action" id="owner-refresh">Refresh</button>
+          </div>
+          <form id="owner-assignment-form">
+            <label for="owner-authority-select">Active municipal authority</label>
+            <select id="owner-authority-select" required></select>
+            <label for="owner-jurisdiction-select">Assigned active jurisdictions</label>
+            <select id="owner-jurisdiction-select" multiple size="7" aria-describedby="owner-assignment-help"></select>
+            <p id="owner-assignment-help">Hold Ctrl (Windows) or Command (Mac) to select multiple jurisdictions. Only server-registered active scopes can be assigned.</p>
+            <button type="submit" class="action-dark">Save audited assignment</button>
+          </form>
+          <div class="owner-authority-list" id="owner-authority-list"></div>
+        </section>
+        <section class="portal-owner-reports" aria-labelledby="owner-reports-title">
+          <div class="section-title-row">
+            <div><p class="page-overline">ALL JURISDICTIONS</p><h2 id="owner-reports-title">Global report overview</h2></div>
+          </div>
+          <div class="portal-report-list" id="owner-report-list"></div>
+        </section>
+      </section>
+    </main>
+    <footer class="app-footer"><a class="cx-brand" href="dashboard.html"><span class="cx-brand-mark">C</span><span>CIVIC<span>X</span></span></a><span>Owner access and assignment changes are restricted and audited.</span></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-auth.js"></script>
+    <script src="portal-navigation.js"></script>
+    <script src="portal-session.js"></script>
+    <script src="owner-portal.js"></script>
+    <script src="theme.js"></script>
+  </body>
+</html>
