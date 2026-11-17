@@ -5,9 +5,6 @@
   const reportList = document.getElementById("authority-report-list");
   const keyInput = document.getElementById("authority-master-key");
   const keyForm = document.getElementById("authority-key-form");
-  const promotionPanel = document.getElementById("authority-jurisdiction-panel");
-  const jurisdictionSelect = document.getElementById("authority-jurisdiction-select");
-  const activateButton = document.getElementById("authority-activate");
   let user = null;
   let activeUserId = null;
 
@@ -230,7 +227,6 @@
       if ([401, 403].includes(error.status)) {
         window.CivicXPortalSession.clear("authority");
         workspace.hidden = true;
-        promotionPanel.hidden = true;
         keyForm.hidden = false;
         keyPanel.hidden = false;
       }
@@ -244,79 +240,21 @@
     keyInput.value = "";
     status.textContent = "Verifying the Authority key…";
     try {
-      const result = await api("/api/portal/authority/entry", {
+      await api("/api/portal/authority/entry", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({})
       });
       if (!requestUserId || user?.id !== requestUserId) return;
-      if (result.requiresJurisdiction) {
-        jurisdictionSelect.replaceChildren();
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        placeholder.textContent = "Choose a municipal corporation";
-        jurisdictionSelect.append(placeholder);
-        result.jurisdictions.forEach((jurisdiction) => {
-          const option = document.createElement("option");
-          option.value = jurisdiction.jurisdictionKey;
-          option.textContent = jurisdiction.displayName;
-          jurisdictionSelect.append(option);
-        });
-        promotionPanel.hidden = false;
-        keyForm.hidden = true;
-        keyPanel.hidden = false;
-        status.textContent = result.jurisdictions.length
-          ? "Select the municipal corporation this authority account will serve."
-          : "No active municipal corporations are available. Contact the site owner.";
-        activateButton.disabled = result.jurisdictions.length === 0;
-        return;
-      }
-      promotionPanel.hidden = true;
       keyForm.hidden = true;
       keyPanel.hidden = true;
       await loadReports();
     } catch (error) {
       if (!requestUserId || user?.id !== requestUserId) return;
       window.CivicXPortalSession.clear("authority");
-      promotionPanel.hidden = true;
       keyForm.hidden = false;
       keyPanel.hidden = false;
       status.textContent = error.message;
-    }
-  }
-
-  async function activateAuthority() {
-    const requestUserId = user?.id;
-    const jurisdictionKey = jurisdictionSelect.value;
-    if (!jurisdictionKey) {
-      status.textContent = "Choose a municipal corporation before continuing.";
-      return;
-    }
-    activateButton.disabled = true;
-    status.textContent = "Activating authority access…";
-    try {
-      const result = await api("/api/portal/authority/promote", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ jurisdictionKey })
-      });
-      if (!requestUserId || user?.id !== requestUserId) return;
-      if (result.activated !== true) throw new Error("Authority access could not be activated.");
-      promotionPanel.hidden = true;
-      keyForm.hidden = true;
-      keyPanel.hidden = true;
-      await loadReports();
-    } catch (error) {
-      if (!requestUserId || user?.id !== requestUserId) return;
-      window.CivicXPortalSession.clear("authority");
-      promotionPanel.hidden = true;
-      keyForm.hidden = false;
-      keyPanel.hidden = false;
-      status.textContent = error.message;
-    } finally {
-      activateButton.disabled = false;
     }
   }
 
@@ -328,7 +266,6 @@
     if (userChanged) {
       keyInput.value = "";
       workspace.hidden = true;
-      promotionPanel.hidden = true;
       keyForm.hidden = false;
       keyPanel.hidden = !user;
     }
@@ -337,7 +274,6 @@
     if (!user) {
       workspace.hidden = true;
       keyPanel.hidden = true;
-      promotionPanel.hidden = true;
       status.textContent = "Sign in with an active authority account to continue.";
       return;
     }
@@ -345,7 +281,6 @@
   }
 
   keyForm.addEventListener("submit", unlock);
-  activateButton.addEventListener("click", () => void activateAuthority());
   document.getElementById("authority-refresh").addEventListener("click", () => void loadReports());
   window.CivicXAuth.onChange(syncAuth);
   window.CivicXAuth.ready.catch((error) => {

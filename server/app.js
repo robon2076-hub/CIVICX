@@ -417,29 +417,6 @@ function createApp(options = {}) {
     }
   });
 
-  app.post("/api/portal/authority/promote", async (request, response) => {
-    response.set({ "Cache-Control": "private, no-store", "Vary": "Authorization" });
-    if (typeof portalService?.promoteAuthority !== "function") {
-      response.status(503).json({ ok: false, error: "Authority access is not configured on this server." });
-      return;
-    }
-    try {
-      if (!request.body || typeof request.body !== "object" || Array.isArray(request.body) ||
-          Object.keys(request.body).some((key) => key !== "jurisdictionKey")) {
-        throw new PortalError("Only jurisdictionKey may be provided.", 400);
-      }
-      response.json({
-        ok: true,
-        result: await portalService.promoteAuthority({
-          ...portalRequest(request),
-          jurisdictionKey: request.body.jurisdictionKey
-        })
-      });
-    } catch (error) {
-      handlePortalError(error, response, "authority promotion", request);
-    }
-  });
-
   app.get("/api/portal/reports", async (request, response) => {
     response.set({ "Cache-Control": "private, no-store", "Vary": "Authorization" });
     if (typeof portalService?.listReports !== "function") {

@@ -100,11 +100,6 @@ function fakeClient(options = {}) {
       if (name === "civic_owner_set_authority_jurisdictions") {
         return { data: options.changedAssignments ?? 1, error: null };
       }
-      if (name === "civic_authority_promote_self") {
-        return options.promotionError
-          ? { data: null, error: options.promotionError }
-          : { data: 1, error: null };
-      }
       return { data: null, error: new Error("unexpected rpc") };
     },
     storage: {
@@ -247,7 +242,7 @@ test("owner entry status uses the authenticated server identity, not a caller-su
   assert.deepEqual(await ownerService.getEntryStatus({ accessToken: "session" }), { isOwner: true });
 });
 
-test("a correct Authority key offers active corporations to a normal signed-in user", async () => {
+test("a correct Authority key does not grant or promote a normal signed-in user", async () => {
   const client = fakeClient({
     userId: citizenId,
     jurisdictionRows: [{
@@ -257,22 +252,16 @@ test("a correct Authority key offers active corporations to a normal signed-in u
     }]
   });
 
-  assert.deepEqual(await portal(client).prepareAuthorityEntry({
-    accessToken: "session",
-    masterKey: authorityKey
-  }), {
-    requiresJurisdiction: true,
-    jurisdictions: [{
-      jurisdictionKey: "howrah",
-      displayName: "Howrah",
-      centerLatitude: undefined,
-      centerLongitude: undefined,
-      isActive: true
-    }]
-  });
+  await assert.rejects(
+    portal(client).prepareAuthorityEntry({ accessToken: "session", masterKey: authorityKey }),
+    (error) => error instanceof PortalError && error.status === 403 &&
+      error.message === "Portal access could not be verified."
+  );
+  assert.equal(client.calls.some((call) => call[0] === "rpc"), false);
+  assert.equal(client.calls.some((call) => call[0] === "from" && call[1] === "civic_authority_jurisdictions"), false);
 });
 
-test("an already assigned authority proceeds without jurisdiction selection", async () => {
+test("an active assigned authority passes the Authority entry check", async () => {
   const client = fakeClient({
     authority: true,
     assignments: ["kolkata"],
@@ -281,7 +270,7 @@ test("an already assigned authority proceeds without jurisdiction selection", as
   assert.deepEqual(await portal(client).prepareAuthorityEntry({
     accessToken: "session",
     masterKey: authorityKey
-  }), { requiresJurisdiction: false });
+  }), { verified: true });
 });
 
 test("wrong Authority keys are denied without promoting or disclosing corporations", async () => {
@@ -297,26 +286,13 @@ test("wrong Authority keys are denied without promoting or disclosing corporatio
   assert.equal(client.calls.some((call) => call[0] === "rpc"), false);
 });
 
-test("Authority promotion uses the authenticated user and selected active jurisdiction", async () => {
-  const client = fakeClient({ userId: citizenId });
-  const result = await portal(client).promoteAuthority({
-    accessToken: "session",
-    masterKey: authorityKey,
-    jurisdictionKey: "howrah",
-    userId: ownerId
-  });
-
-  assert.deepEqual(result, { activated: true });
-  assert.deepEqual(client.calls.find((call) =>
-    call[0] === "rpc" && call[1] === "civic_authority_promote_self"), [
-    "rpc",
-    "civic_authority_promote_self",
-    { p_actor_user_id: citizenId, p_jurisdiction_key: "howrah" }
-  ]);
-});
-
 test("authority portal denies missing assignments and inactive jurisdictions", async () => {
   const client = fakeClient({ authority: true, assignments: ["old-city"], activeJurisdictions: [] });
+  await assert.rejects(
+    portal(client).prepareAuthorityEntry({ accessToken: "session", masterKey: authorityKey }),
+    (error) => error instanceof PortalError && error.status === 403 &&
+      error.message === "Portal access could not be verified."
+  );
   await assert.rejects(
     portal(client).listReports({ accessToken: "session", masterKey: authorityKey }),
     (error) => error instanceof PortalError && error.status === 403
@@ -476,38 +452,7 @@ test("portal HTTP routes require bearer authentication and keep the master key o
       }
     }
   });
-
-  test("portal key failures are generically reported and limited by client IP", async () => {
-    const app = createApp({
-      portalService: {
-        async listReports() {
-          throw new PortalError("Portal access could not be verified.", 403, { credentialFailure: true });
-        }
-      }
-    });
-    await withServer(app, async (server) => {
-      const url = `http://127.0.0.1:${server.address().port}/api/portal/reports`;
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        const response = await fetch(url, {
-          headers: { authorization: "Bearer session", "x-civicx-master-key": "wrong-key" }
-        });
-        assert.equal(response.status, 403);
-        assert.deepEqual(await response.json(), {
-          ok: false,
-          error: "Portal access could not be verified."
-        });
-      }
-      const blocked = await fetch(url, {
-        headers: { authorization: "Bearer session", "x-civicx-master-key": "wrong-key" }
-      });
-      assert.equal(blocked.status, 429);
-      assert.match((await blocked.json()).error, /temporarily blocked/i);
-    });
-  });
-
-  const server = app.listen(0, "127.0.0.1");
-  try {
-    await new Promise((resolve) => server.once("listening", resolve));
+  await withServer(app, async (server) => {
     const url = `http://127.0.0.1:${server.address().port}/api/portal/reports`;
     const denied = await fetch(url);
     assert.equal(denied.status, 401);
@@ -527,9 +472,35 @@ test("portal HTTP routes require bearer authentication and keep the master key o
     });
     assert.equal(limited.status, 429);
     assert.equal(limited.headers.get("cache-control"), "private, no-store");
-  } finally {
-    await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
-  }
+  });
+});
+
+test("portal key failures are generically reported and limited by client IP", async () => {
+  const app = createApp({
+    portalService: {
+      async listReports() {
+        throw new PortalError("Portal access could not be verified.", 403, { credentialFailure: true });
+      }
+    }
+  });
+  await withServer(app, async (server) => {
+    const url = `http://127.0.0.1:${server.address().port}/api/portal/reports`;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await fetch(url, {
+        headers: { authorization: "Bearer session", "x-civicx-master-key": "wrong-key" }
+      });
+      assert.equal(response.status, 403);
+      assert.deepEqual(await response.json(), {
+        ok: false,
+        error: "Portal access could not be verified."
+      });
+    }
+    const blocked = await fetch(url, {
+      headers: { authorization: "Bearer session", "x-civicx-master-key": "wrong-key" }
+    });
+    assert.equal(blocked.status, 429);
+    assert.match((await blocked.json()).error, /temporarily blocked/i);
+  });
 });
 
 test("jurisdiction endpoint serves safe public registry data without requiring portal credentials", async () => {
@@ -549,50 +520,48 @@ test("jurisdiction endpoint serves safe public registry data without requiring p
       result: { jurisdictions: [{ jurisdictionKey: "kolkata", displayName: "Kolkata" }] }
     });
   });
+});
 
-  test("portal navigation and Authority promotion routes derive identity from the bearer session", async () => {
-    const calls = [];
-    const app = createApp({
-      portalService: {
-        async getEntryStatus(request) {
-          calls.push(["entry-status", request]);
-          return { isOwner: false };
-        },
-        async prepareAuthorityEntry(request) {
-          calls.push(["authority-entry", request]);
-          return { requiresJurisdiction: true, jurisdictions: [] };
-        },
-        async promoteAuthority(request) {
-          calls.push(["authority-promotion", request]);
-          return { activated: true };
-        }
+test("portal navigation and Authority verification routes use bearer identity and reject promotion", async () => {
+  const calls = [];
+  const app = createApp({
+    portalService: {
+      async getEntryStatus(request) {
+        calls.push(["entry-status", request]);
+        return { isOwner: false };
+      },
+      async prepareAuthorityEntry(request) {
+        calls.push(["authority-entry", request]);
+        throw new PortalError("Portal access could not be verified.", 403, { credentialFailure: true });
       }
-    });
-    await withServer(app, async (server) => {
-      const root = `http://127.0.0.1:${server.address().port}/api/portal`;
-      const authorization = { authorization: "Bearer session" };
+    }
+  });
+  await withServer(app, async (server) => {
+    const root = `http://127.0.0.1:${server.address().port}/api/portal`;
+    const authorization = { authorization: "Bearer session" };
 
-      const deniedStatus = await fetch(`${root}/entry-status`);
-      assert.equal(deniedStatus.status, 401);
-      const status = await fetch(`${root}/entry-status`, { headers: authorization });
-      assert.deepEqual(await status.json(), { ok: true, result: { isOwner: false } });
+    const deniedStatus = await fetch(`${root}/entry-status`);
+    assert.equal(deniedStatus.status, 401);
+    const status = await fetch(`${root}/entry-status`, { headers: authorization });
+    assert.deepEqual(await status.json(), { ok: true, result: { isOwner: false } });
 
-      const forgedPromotion = await fetch(`${root}/authority/promote`, {
-        method: "POST",
-        headers: { ...authorization, "x-civicx-master-key": authorityKey, "content-type": "application/json" },
-        body: JSON.stringify({ jurisdictionKey: "howrah", userId: ownerId })
-      });
-      assert.equal(forgedPromotion.status, 400);
-      const promotion = await fetch(`${root}/authority/promote`, {
-        method: "POST",
-        headers: { ...authorization, "x-civicx-master-key": authorityKey, "content-type": "application/json" },
-        body: JSON.stringify({ jurisdictionKey: "howrah" })
-      });
-      assert.equal(promotion.status, 200);
-      assert.deepEqual(calls.find((call) => call[0] === "authority-promotion"), [
-        "authority-promotion",
-        { accessToken: "session", masterKey: authorityKey, jurisdictionKey: "howrah" }
-      ]);
+    const entry = await fetch(`${root}/authority/entry`, {
+      method: "POST",
+      headers: { ...authorization, "x-civicx-master-key": authorityKey, "content-type": "application/json" },
+      body: JSON.stringify({})
     });
+    assert.equal(entry.status, 403);
+    assert.deepEqual(await entry.json(), { ok: false, error: "Portal access could not be verified." });
+    assert.deepEqual(calls.find((call) => call[0] === "authority-entry"), [
+      "authority-entry",
+      { accessToken: "session", masterKey: authorityKey }
+    ]);
+
+    const promotion = await fetch(`${root}/authority/promote`, {
+      method: "POST",
+      headers: { ...authorization, "x-civicx-master-key": authorityKey, "content-type": "application/json" },
+      body: JSON.stringify({ jurisdictionKey: "howrah" })
+    });
+    assert.equal(promotion.status, 404);
   });
 });

@@ -79,48 +79,22 @@ function createPortalService(options = {}) {
       .eq("user_id", userId)
       .maybeSingle();
     if (authorityError) throw new PortalError("Authority access could not be verified.", 503);
-    if (authority) {
-      if (!authority.is_active) throw denied();
-      const { data: assignments, error: assignmentError } = await client
-        .from("civic_authority_jurisdictions")
-        .select("jurisdiction_key")
-        .eq("authority_user_id", userId);
-      if (assignmentError) throw new PortalError("Authority access could not be verified.", 503);
-      const assignedKeys = [...new Set((assignments || []).map((row) => row.jurisdiction_key))];
-      if (!assignedKeys.length) throw denied();
-      const { data: jurisdictions, error: jurisdictionError } = await client
-        .from("civic_jurisdictions")
-        .select("jurisdiction_key")
-        .in("jurisdiction_key", assignedKeys)
-        .eq("is_active", true);
-      if (jurisdictionError) throw new PortalError("Authority access could not be verified.", 503);
-      if (!jurisdictions?.length) throw denied();
-      return { requiresJurisdiction: false };
-    }
-    return {
-      requiresJurisdiction: true,
-      jurisdictions: (await listJurisdictions()).jurisdictions
-    };
-  }
-
-  async function promoteAuthority(request) {
-    const userId = await authenticateAuthorityKey(request);
-    if (typeof request?.jurisdictionKey !== "string" ||
-        !JURISDICTION_KEY_PATTERN.test(request.jurisdictionKey)) {
-      throw new PortalError("Choose an active registered municipal corporation.", 400);
-    }
-    const { data, error } = await client.rpc("civic_authority_promote_self", {
-      p_actor_user_id: userId,
-      p_jurisdiction_key: request.jurisdictionKey
-    });
-    if (error) {
-      if (error.code === "22023") {
-        throw new PortalError("Choose an active registered municipal corporation.", 400);
-      }
-      if (error.code === "23505") throw denied();
-      throw new PortalError("Authority access could not be activated.", 503);
-    }
-    return { activated: data === 1 };
+    if (!authority?.is_active) throw denied();
+    const { data: assignments, error: assignmentError } = await client
+      .from("civic_authority_jurisdictions")
+      .select("jurisdiction_key")
+      .eq("authority_user_id", userId);
+    if (assignmentError) throw new PortalError("Authority access could not be verified.", 503);
+    const assignedKeys = [...new Set((assignments || []).map((row) => row.jurisdiction_key))];
+    if (!assignedKeys.length) throw denied();
+    const { data: jurisdictions, error: jurisdictionError } = await client
+      .from("civic_jurisdictions")
+      .select("jurisdiction_key")
+      .in("jurisdiction_key", assignedKeys)
+      .eq("is_active", true);
+    if (jurisdictionError) throw new PortalError("Authority access could not be verified.", 503);
+    if (!jurisdictions?.length) throw denied();
+    return { verified: true };
   }
 
   async function authorize(request) {
@@ -339,7 +313,6 @@ function createPortalService(options = {}) {
     listOwnerConfiguration,
     listReports,
     prepareAuthorityEntry,
-    promoteAuthority,
     setAuthorityJurisdictions
   };
 }

@@ -3,6 +3,8 @@
   const ownerEntries = Array.from(document.querySelectorAll("[data-owner-entry]"));
   const legacyUnlockPrefix = "civicx.portal-entry.opened.";
   let requestVersion = 0;
+  let returnToAuthorityAfterSignIn = false;
+  let currentUser = null;
 
   function showVerificationError(message) {
     const status = document.querySelectorAll("[data-civicx-auth-status]")[0] ||
@@ -30,12 +32,16 @@
   async function sync(state) {
     const version = ++requestVersion;
     const signedIn = Boolean(state.user?.id && state.client);
-    authorityEntries.forEach((entry) => {
-      entry.hidden = !signedIn;
-    });
+    currentUser = state.user || null;
+    authorityEntries.forEach((entry) => { entry.hidden = false; });
     ownerEntries.forEach((entry) => {
       entry.hidden = true;
     });
+    if (signedIn && returnToAuthorityAfterSignIn) {
+      returnToAuthorityAfterSignIn = false;
+      window.location.assign("authority.html");
+      return;
+    }
     if (!signedIn) return;
 
     try {
@@ -70,6 +76,20 @@
       }
     }
   }
+
+  authorityEntries.forEach((entry) => {
+    entry.addEventListener("click", async (event) => {
+      if (currentUser?.id) return;
+      event.preventDefault();
+      await window.CivicXAuth.ready;
+      if (window.CivicXAuth.user?.id) {
+        window.location.assign("authority.html");
+        return;
+      }
+      returnToAuthorityAfterSignIn = true;
+      await window.CivicXAuth.open("login");
+    });
+  });
 
   window.CivicXAuth.onChange((state) => {
     void sync(state);

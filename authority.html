@@ -15,7 +15,7 @@
       <nav class="app-nav" aria-label="Main navigation">
         <a href="dashboard.html">Dashboard</a>
         <a href="community.html">Community</a>
-        <a class="is-current" data-authority-entry href="authority.html" hidden>Authority</a>
+        <a class="is-current" data-authority-entry href="authority.html">Authority</a>
         <a data-owner-entry href="owner.html" hidden>Owner</a>
       </nav>
       <div class="app-account">
@@ -46,11 +46,6 @@
           <input id="authority-master-key" type="password" autocomplete="off" spellcheck="false" maxlength="512" required />
           <button type="submit" class="action-dark">Verify and open portal</button>
         </form>
-        <div id="authority-jurisdiction-panel" hidden>
-          <label for="authority-jurisdiction-select">Municipal corporation</label>
-          <select id="authority-jurisdiction-select" required></select>
-          <button type="button" class="action-dark" id="authority-activate">Activate authority access</button>
-        </div>
       </section>
       <section class="portal-workspace" id="authority-workspace" hidden>
         <div class="section-title-row">
