@@ -4,7 +4,11 @@ const multer = require("multer");
 const { assertOnlyPublicFields, buildModelInput } = require("./ai/privacy");
 const { validateRedactedPhotos } = require("./ai/redaction");
 const { verifyNoSensitiveRegions } = require("./ai/image-privacy");
-const { chatWithCivicX, generateDescription } = require("./ai/gemini");
+const {
+  chatWithCivicX,
+  generateCivicTextFallbackResponse,
+  generateDescription
+} = require("./ai/gemini");
 const { registerAssistantRoute } = require("./ai/assistant");
 const { registerEnvironmentRoutes } = require("./environment");
 const { parseMapBounds } = require("./public-map");
@@ -129,6 +133,18 @@ function createApp(options = {}) {
     limits: { fileSize: 8 * 1024 * 1024, files: 3, fields: 4, fieldSize: 2048 },
     fileFilter(request, file, callback) {
       callback(null, imageTypes.has(file.mimetype));
+    }
+  });
+  const chatUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_CHAT_IMAGE_BYTES, files: 1, fields: 4, fieldSize: 64 * 1024 },
+    fileFilter(request, file, callback) {
+      if (file.mimetype !== "image/jpeg") {
+        request.chatImageWarning = true;
+        callback(null, false);
+        return;
+      }
+      callback(null, true);
     }
   });
   function consumeAiRateLimit(ip) {
@@ -588,17 +604,35 @@ function createApp(options = {}) {
     });
   });
 
-  async function handleChat(request, response, body = request.body) {
+  async function handleChat(
+    request,
+    response,
+    body = request.body,
+    uploadedPhoto = request.file,
+    uploadWarning = false
+  ) {
     try {
       if (!body || typeof body !== "object" || Array.isArray(body) ||
-        Object.keys(body).some((key) => !["message", "history", "image", "mimeType", "imageAttached"].includes(key))) {
-        const error = new TypeError("Send only a message, history, and optional redacted image.");
+        Object.keys(body).some((key) => ![
+          "message", "history", "image", "mimeType", "imageAttached", "imageWarning"
+        ].includes(key))) {
+        const error = new TypeError("Send only a message, history, and optional redacted photo.");
         error.statusCode = 400;
         throw error;
       }
-      const history = body.history === undefined ? [] : body.history;
-      if (typeof body.message !== "string" || !Array.isArray(history)) {
-        const error = new TypeError("Send a text message, recent history, and an optional redacted JPEG.");
+      let history = body.history === undefined ? [] : body.history;
+      if (typeof history === "string") {
+        try {
+          history = JSON.parse(history);
+        } catch {
+          const error = new TypeError("Chat history must be valid JSON.");
+          error.statusCode = 400;
+          throw error;
+        }
+      }
+      if (typeof body.message !== "string" || !Array.isArray(history) ||
+          body.message.length > 2000) {
+        const error = new TypeError("Send a text message of at most 2,000 characters and valid recent history.");
         error.statusCode = 400;
         throw error;
       }
@@ -607,25 +641,74 @@ function createApp(options = {}) {
         error.statusCode = 400;
         throw error;
       }
-      if (!body.message.trim()) {
-        const error = new TypeError("Type a short description of the issue. CivicX AI cannot identify it from a photo alone.");
+      if (body.imageWarning !== undefined && typeof body.imageWarning !== "boolean") {
+        const error = new TypeError("Image processing status must be true or false.");
         error.statusCode = 400;
         throw error;
       }
-      const hasImageData = body.image !== undefined && body.image !== null;
-      const imageAttached = body.imageAttached === true || hasImageData;
-      const imageWarning = hasImageData
-        ? !isValidChatSupportingImage(body.image, body.mimeType)
-        : body.mimeType !== undefined;
-      delete body.image;
-      delete body.mimeType;
-      delete body.imageAttached;
-      const reply = await chat({
-        message: body.message,
-        history,
-        imageAttached,
-        imageWarning
-      }, apiKey);
+      let imageAttached = Boolean(
+        uploadedPhoto || uploadWarning || request.chatImageWarning ||
+        body.imageAttached || body.imageWarning
+      );
+      let imageWarning = Boolean(uploadWarning || request.chatImageWarning || body.imageWarning);
+      let legacyPhoto = null;
+      if (body.image !== undefined && body.image !== null) {
+        imageAttached = true;
+        if (!uploadedPhoto && isValidChatSupportingImage(body.image, body.mimeType)) {
+          legacyPhoto = Buffer.from(body.image, "base64");
+          uploadedPhoto = { buffer: legacyPhoto, mimetype: body.mimeType };
+        } else {
+          imageWarning = true;
+        }
+      } else if (body.mimeType !== undefined && !uploadedPhoto) {
+        imageWarning = true;
+      }
+      if (body.imageAttached && !uploadedPhoto && body.image === undefined) imageWarning = true;
+      if (!body.message.trim() && !imageAttached) {
+        const error = new TypeError("Type a short description or attach a photo.");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      let image = null;
+      if (uploadedPhoto && !imageWarning) {
+        try {
+          const [redactedPhoto] = validateRedactedPhotos([uploadedPhoto]);
+          await verifyImages([redactedPhoto]);
+          image = {
+            data: redactedPhoto.buffer.toString("base64"),
+            mimeType: "image/jpeg"
+          };
+        } catch (error) {
+          imageWarning = true;
+          console.error("[AI chat] Photo privacy verification failed", {
+            code: error.code || "UNKNOWN",
+            status: error.statusCode || 400
+          });
+        }
+      }
+
+      let reply;
+      if (!image && imageAttached && !body.message.trim()) {
+        reply = generateCivicTextFallbackResponse(body.message);
+      } else {
+        try {
+          reply = await chat({
+            message: body.message,
+            history,
+            image,
+            imageAttached,
+            imageWarning
+          }, apiKey);
+        } catch (error) {
+          if (!imageAttached) throw error;
+          console.error("[AI chat] Photo-assisted reply failed", {
+            code: error.code || "UNKNOWN",
+            status: error.status || error.statusCode
+          });
+          reply = generateCivicTextFallbackResponse(body.message);
+        }
+      }
       response.status(200).json({ ok: true, reply });
     } catch (error) {
       if (error.code === "PHOTO_PRIVACY_REJECTED" || error.statusCode === 400) {
@@ -643,22 +726,52 @@ function createApp(options = {}) {
           ? "AI is not configured"
           : error.message || "The assistant is temporarily unavailable. Please try again."
       });
+    } finally {
+      uploadedPhoto?.buffer?.fill(0);
     }
   }
 
-  app.post("/api/chat", requireAiUser, (request, response) => handleChat(request, response));
-  app.post("/api/ai/chat", requireAiUser, (request, response) => {
-    if (!request.body || typeof request.body !== "object" || Array.isArray(request.body) ||
-        !Object.hasOwn(request.body, "messages")) {
-      handleChat(request, response);
+  function receiveChatRequest(request, response, legacy = false) {
+    const processRequest = (uploadError = null) => {
+      const photoUploadError = uploadError &&
+        ["LIMIT_FILE_SIZE", "LIMIT_FILE_COUNT", "LIMIT_UNEXPECTED_FILE"].includes(uploadError.code);
+      if (uploadError && !photoUploadError) {
+        console.error("[AI chat] Multipart request parsing failed", {
+          code: uploadError.code || "UNKNOWN",
+          status: uploadError.status || uploadError.statusCode || 400
+        });
+        response.status(400).json({ ok: false, error: "Send a valid chat request." });
+        return;
+      }
+      void handleChat(
+        request,
+        response,
+        request.body,
+        request.file,
+        Boolean(photoUploadError || request.chatImageWarning)
+      );
+    };
+
+    if (request.is("multipart/form-data")) {
+      chatUpload.single("image")(request, response, processRequest);
       return;
     }
+
+    if (!legacy || !request.body || typeof request.body !== "object" ||
+        Array.isArray(request.body) || !Object.hasOwn(request.body, "messages")) {
+      void handleChat(request, response);
+      return;
+    }
+
     try {
-      handleChat(request, response, legacyChatRequest(request.body));
+      void handleChat(request, response, legacyChatRequest(request.body));
     } catch (error) {
       response.status(400).json({ ok: false, error: error.message });
     }
-  });
+  }
+
+  app.post("/api/chat", requireAiUser, (request, response) => receiveChatRequest(request, response));
+  app.post("/api/ai/chat", requireAiUser, (request, response) => receiveChatRequest(request, response, true));
 
   app.use((error, request, response, next) => {
     if (request.path === "/api/chat" || request.path === "/api/ai/chat") {

@@ -4,8 +4,7 @@ const { createCanvas } = require("@napi-rs/canvas");
 const { createApp } = require("../server/app");
 const { chatWithCivicX } = require("../server/ai/gemini");
 const TEST_ACCESS_TOKEN = "verified-test-access-token";
-const REDACTED_TEST_JPEG = createCanvas(32, 32).toBuffer("image/jpeg").toString("base64");
-const REDACTED_TEST_PNG = createCanvas(32, 32).toBuffer("image/png").toString("base64");
+const REDACTED_TEST_JPEG = createCanvas(32, 32).toBuffer("image/jpeg");
 
 function createAuthenticatedApp(options = {}) {
   return createApp({
@@ -47,120 +46,203 @@ function postCurrentChat(server, body) {
   });
 }
 
-function createRegressionApp({ onRequest = () => {}, onModelRequest = () => {} } = {}) {
+function postMultipartChat(server, { message, image = REDACTED_TEST_JPEG, mimeType = "image/jpeg" }) {
+  const body = new FormData();
+  body.append("message", message);
+  body.append("history", "[]");
+  body.append("image", new Blob([image], { type: mimeType }), "civicx-redacted-photo.jpg");
+  return fetch(`http://127.0.0.1:${server.address().port}/api/chat`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${TEST_ACCESS_TOKEN}` },
+    body
+  });
+}
+
+function createRegressionApp({
+  onRequest = () => {},
+  onModelRequest = () => {},
+  rejectImage = false,
+  verifyPhotoPrivacy = async () => {}
+} = {}) {
   return createAuthenticatedApp({
     apiKey: "local-test-key",
-    verifyPhotoPrivacy: async () => {},
+    verifyPhotoPrivacy,
     chatWithCivicX: (request, apiKey) => {
       onRequest(request);
       return chatWithCivicX(request, apiKey, async (_url, init) => {
-        onModelRequest();
         const payload = JSON.parse(init.body);
         const hasImage = payload.contents?.some((turn) =>
           turn.parts?.some((part) => part.inlineData)
         );
-        if (hasImage) {
+        onModelRequest({ hasImage, payload });
+        if (hasImage && rejectImage) {
           return new Response(JSON.stringify({
-            error: { code: 400, message: "Synthetic image-input rejection for regression testing." }
+            error: { code: 400, message: "Synthetic image-input rejection." }
           }), { status: 400, headers: { "content-type": "application/json" } });
         }
         return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: "Local text-only reply." }] } }]
+          candidates: [{
+            content: {
+              parts: [{
+                text: hasImage
+                  ? "The redacted photo shows visible civic issue evidence. Use Report an Issue to submit it."
+                  : "Local text-only reply."
+              }]
+            }
+          }]
         }), { status: 200, headers: { "content-type": "application/json" } });
       });
     }
   });
 }
 
-test("chat classifies image-plus-text civic issues from text without sending the image to the model", async () => {
-  const cases = [
-    { message: "This is garbage, reported near Park Street", category: "Garbage and Sanitation", location: "Park Street", image: REDACTED_TEST_JPEG, mimeType: "image/jpeg" },
-    { message: "Pothole reported near College Street", category: "Road and Infrastructure", location: "College Street" },
-    { message: "Water leakage reported near New Market", category: "Water and Drainage", location: "New Market", image: REDACTED_TEST_PNG, mimeType: "image/png" },
-    { message: "Streetlight is out near Victoria Memorial", category: "Public Safety", location: "Victoria Memorial" },
-    { message: "Electricity problem reported near Esplanade", category: "Electricity related problem", location: "Esplanade" }
-  ];
-
+test("chat sends a locally redacted photo and the user's issue text to Gemini", async () => {
   const received = [];
-  let modelRequests = 0;
+  const modelRequests = [];
   await withServer(createRegressionApp({
     onRequest: (request) => received.push(request),
-    onModelRequest: () => { modelRequests += 1; }
+    onModelRequest: (request) => modelRequests.push(request)
   }), async (server) => {
-    for (const { message, category, location, image, mimeType } of cases) {
-      const body = { message, history: [] };
-      if (image) {
-        body.image = image;
-        body.mimeType = mimeType;
-      } else {
-        body.imageAttached = true;
-      }
-      const response = await postCurrentChat(server, body);
-      assert.equal(response.status, 200);
-      const payload = await response.json();
-      assert.equal(payload.ok, true);
-      assert.match(payload.reply, new RegExp(category, "i"));
-      assert.match(payload.reply, new RegExp(location, "i"));
-      assert.match(payload.reply, /report an issue/i);
-      assert.match(payload.reply, /photo was not analyzed/i);
-    }
-  });
-  assert.equal(modelRequests, 0);
-  assert.equal(received.length, cases.length);
-  assert.ok(received.every((request) =>
-    request.imageAttached === true && !Object.hasOwn(request, "image") && !Object.hasOwn(request, "mimeType")
-  ));
-});
-
-test("chat treats a valid photo as supporting evidence for non-keyword text", async () => {
-  await withServer(createRegressionApp(), async (server) => {
-    const response = await postCurrentChat(server, {
-      message: "Can you explain how to report a civic issue?",
-      history: [],
-      image: REDACTED_TEST_JPEG,
-      mimeType: "image/jpeg"
+    const response = await postMultipartChat(server, {
+      message: "This is garbage, reported near Park Street"
     });
     assert.equal(response.status, 200);
     const payload = await response.json();
-    assert.equal(payload.reply, "Local text-only reply.\n\nThe photo was not analyzed; I used your text to identify the issue.");
+    assert.equal(payload.ok, true);
+    assert.match(payload.reply, /photo shows visible civic issue evidence/i);
+    assert.match(payload.reply, /photo was analyzed/i);
+  });
+  assert.equal(modelRequests.length, 1);
+  assert.equal(modelRequests[0].hasImage, true);
+  const contents = modelRequests[0].payload.contents;
+  const parts = contents[contents.length - 1].parts;
+  assert.match(parts[0].text, /This is garbage, reported near Park Street/);
+  assert.equal(parts[1].inlineData.mimeType, "image/jpeg");
+  assert.equal(Buffer.from(parts[1].inlineData.data, "base64").length, REDACTED_TEST_JPEG.length);
+  const systemInstruction = modelRequests[0].payload.systemInstruction.parts[0].text;
+  assert.match(systemInstruction, /describe only visible evidence/i);
+  assert.match(systemInstruction, /Never identify people/i);
+  assert.equal(received[0].image.mimeType, "image/jpeg");
+});
+
+test("chat accepts a photo without text and lets Gemini describe the visible issue", async () => {
+  let modelRequest;
+  await withServer(createRegressionApp({
+    onModelRequest: (request) => { modelRequest = request; }
+  }), async (server) => {
+    const response = await postMultipartChat(server, { message: "" });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.match(payload.reply, /photo shows visible civic issue evidence/i);
+  });
+  assert.equal(modelRequest.hasImage, true);
+  const contents = modelRequest.payload.contents;
+  assert.match(contents[contents.length - 1].parts[0].text, /No text was provided/);
+});
+
+test("chat rejects a photo that fails the server privacy validation and answers from text", async () => {
+  let modelRequests = 0;
+  await withServer(createRegressionApp({
+    onModelRequest: () => { modelRequests += 1; }
+  }), async (server) => {
+    const response = await postMultipartChat(server, {
+      message: "Garbage reported near Park Street",
+      image: Buffer.from("not a redacted jpeg")
+    });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.match(payload.reply, /Garbage and Sanitation/i);
+    assert.match(payload.reply, /Park Street/i);
+    assert.match(payload.reply, /couldn't analyze the photo/i);
+    assert.equal(modelRequests, 0);
   });
 });
 
-test("chat uses text when an attached image is unsupported or oversized", async () => {
-  const oversizedImage = Buffer.alloc(8 * 1024 * 1024 + 1).toString("base64");
+test("chat continues from text when the uploaded photo type or size is unsupported", async () => {
   const cases = [
-    { image: Buffer.from("unsupported").toString("base64"), mimeType: "image/gif" },
-    { image: oversizedImage, mimeType: "image/jpeg" }
+    { image: Buffer.from("not an image"), mimeType: "image/gif" },
+    { image: Buffer.alloc(8 * 1024 * 1024 + 1), mimeType: "image/jpeg" }
   ];
-
   await withServer(createRegressionApp(), async (server) => {
-    for (const image of cases) {
-      const response = await postCurrentChat(server, {
-        message: "Garbage reported near Park Street",
-        history: [],
-        ...image
+    for (const photo of cases) {
+      const response = await postMultipartChat(server, {
+        message: "Electricity problem reported near Esplanade",
+        ...photo
       });
       assert.equal(response.status, 200);
       const payload = await response.json();
-      assert.equal(payload.ok, true);
-      assert.match(payload.reply, /Garbage and Sanitation/i);
-      assert.match(payload.reply, /couldn't read the attached photo/i);
-      assert.match(payload.reply, /Park Street/i);
+      assert.match(payload.reply, /Electricity related problem/i);
+      assert.match(payload.reply, /Esplanade/i);
+      assert.match(payload.reply, /couldn't analyze the photo/i);
     }
   });
 });
 
-test("chat asks for text when an image is sent without a message", async () => {
-  await withServer(createRegressionApp(), async (server) => {
-    const response = await postCurrentChat(server, {
-      message: "",
-      history: [],
-      image: REDACTED_TEST_JPEG,
-      mimeType: "image/jpeg"
+test("chat falls back to safe text guidance when server-side photo verification fails", async () => {
+  let modelRequests = 0;
+  await withServer(createRegressionApp({
+    verifyPhotoPrivacy: async () => {
+      const error = new Error("Synthetic privacy verification failure.");
+      error.code = "PHOTO_PRIVACY_VERIFICATION_UNAVAILABLE";
+      throw error;
+    },
+    onModelRequest: () => { modelRequests += 1; }
+  }), async (server) => {
+    const response = await postMultipartChat(server, {
+      message: "Water leakage reported near New Market"
     });
-    assert.equal(response.status, 400);
-    assert.match((await response.json()).error, /type a short description/i);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.match(payload.reply, /Water and Drainage/i);
+    assert.match(payload.reply, /New Market/i);
+    assert.match(payload.reply, /couldn't analyze the photo/i);
   });
+  assert.equal(modelRequests, 0);
+});
+
+test("photo failure keeps keyword mappings for all civic issue categories", async () => {
+  const cases = [
+    { message: "Garbage near Park Street", category: "Garbage and Sanitation", location: "Park Street" },
+    { message: "Pothole near College Street", category: "Road and Infrastructure", location: "College Street" },
+    { message: "Water leakage near New Market", category: "Water and Drainage", location: "New Market" },
+    { message: "Streetlight broken near Victoria Memorial", category: "Public Safety", location: "Victoria Memorial" },
+    { message: "Electricity outage near Esplanade", category: "Electricity related problem", location: "Esplanade" }
+  ];
+  await withServer(createRegressionApp(), async (server) => {
+    for (const { message, category, location } of cases) {
+      const response = await postCurrentChat(server, {
+        message,
+        history: [],
+        imageAttached: true
+      });
+      assert.equal(response.status, 200);
+      const payload = await response.json();
+      assert.match(payload.reply, new RegExp(category, "i"));
+      assert.match(payload.reply, new RegExp(location, "i"));
+      assert.match(payload.reply, /Report an Issue/i);
+      assert.match(payload.reply, /couldn't analyze the photo/i);
+    }
+  });
+});
+
+test("chat falls back to keyword guidance when Gemini cannot analyze a valid photo", async () => {
+  let modelRequests = 0;
+  await withServer(createRegressionApp({
+    rejectImage: true,
+    onModelRequest: () => { modelRequests += 1; }
+  }), async (server) => {
+    const response = await postMultipartChat(server, {
+      message: "Pothole reported near College Street"
+    });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.match(payload.reply, /Road and Infrastructure/i);
+    assert.match(payload.reply, /College Street/i);
+    assert.match(payload.reply, /Report an Issue/i);
+    assert.match(payload.reply, /couldn't analyze the photo/i);
+  });
+  assert.equal(modelRequests, 1);
 });
 
 test("text-only civic issue messages receive keyword-based guidance", async () => {
@@ -312,9 +394,9 @@ test("chat.js is versioned in both pages and served with revalidation headers", 
     for (const page of ["ai.html", "dashboard.html"]) {
       const response = await fetch(`http://127.0.0.1:${server.address().port}/${page}`);
       assert.equal(response.status, 200);
-      assert.match(await response.text(), /src="chat\.js\?v=20261118"/);
+      assert.match(await response.text(), /src="chat\.js\?v=20261119"/);
     }
-    const response = await fetch(`http://127.0.0.1:${server.address().port}/chat.js?v=20261118`);
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/chat.js?v=20261119`);
     assert.equal(response.status, 200);
     assert.match(response.headers.get("cache-control"), /no-cache/);
     assert.match(response.headers.get("cache-control"), /max-age=0/);

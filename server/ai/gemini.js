@@ -9,6 +9,8 @@ const CHAT_SYSTEM_INSTRUCTION = [
   "Keep replies clear, structured with short paragraphs or bullet points, and directly actionable.",
   "CivicX does not file complaints with authorities or verify portal status. Never claim that a complaint was submitted, assigned, or resolved.",
   "Do not invent official procedures, contact details, service status, or city data. Direct users to official portals when needed.",
+  "When a redacted photo is attached, describe only visible evidence and combine it with the user's text. Give a likely issue category, possible causes as possibilities, relevant health or safety concerns, and practical next steps. Recommend submitting through Report an Issue.",
+  "Repeat a location only when the user provided it. Never identify people, read number plates, or guess identities, private details, unseen causes, or an exact location.",
   "For emergencies, direct users to local emergency services. Do not ask for or repeat personal contact details, passwords, or exact home addresses."
 ].join(" ");
 
@@ -47,19 +49,11 @@ function redactContactDetails(text) {
     .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g, "[phone redacted]");
 }
 
-function providerError(error, apiKey) {
+function providerError(error) {
   const status = Number(error?.status || error?.response?.status);
-  let details = String(error?.message || "The provider request failed.");
-  try {
-    const parsed = JSON.parse(details);
-    if (typeof parsed.error?.message === "string") details = parsed.error.message;
-  } catch {
-    // Keep the SDK's diagnostic when it is not a JSON error response.
-  }
-  details = details.split(apiKey).join("[redacted]").slice(0, 500);
   console.error("[CivicX Gemini] API request failed", {
     status: Number.isInteger(status) && status > 0 ? status : "connection error",
-    details
+    code: error?.code || "PROVIDER_ERROR"
   });
 
   if (status === 429) {
@@ -142,7 +136,7 @@ async function generateText({ apiKey, contents, systemInstruction, responseSchem
     }
   }
 
-  throw providerError(lastError, apiKey);
+  throw providerError(lastError);
 }
 
 function normalizeHistory(history) {
@@ -509,10 +503,10 @@ function extractIssueLocation(message) {
 
 function addImageNotice(reply, { imageAttached = false, imageWarning = false } = {}) {
   if (imageWarning) {
-    return `${reply}\n\nI couldn't read the attached photo, so this guidance is based only on your text.`;
+    return `${reply}\n\nI couldn't analyze the photo this time, so I used your description.`;
   }
   if (imageAttached) {
-    return `${reply}\n\nThe photo was not analyzed; I used your text to identify the issue.`;
+    return `${reply}\n\nThe photo was analyzed only as supporting evidence; confirm the issue details before submitting.`;
   }
   return reply;
 }
@@ -530,6 +524,21 @@ function generateCivicIssueTextResponse(message, imageState = {}) {
   return addImageNotice(reply, imageState);
 }
 
+function generateCivicTextFallbackResponse(message) {
+  const prompt = String(message || "").trim();
+  const issueReply = generateCivicIssueTextResponse(prompt, {
+    imageAttached: true,
+    imageWarning: true
+  });
+  if (issueReply) return issueReply;
+  if (!prompt) {
+    return "I couldn't analyze the photo this time. Add a short description and location, then try again or submit it through Report an Issue.";
+  }
+  const location = extractIssueLocation(redactContactDetails(prompt));
+  const locationNote = location ? ` You mentioned **${location}**.` : "";
+  return `I couldn't analyze the photo this time, so I used your description. I couldn't identify a specific issue category from the text alone.${locationNote} Add a few details, then submit it through **Report an Issue**.`;
+}
+
 async function chatWithCivicX({
   message,
   history = [],
@@ -538,16 +547,30 @@ async function chatWithCivicX({
   imageWarning = false
 }, apiKey = process.env.GEMINI_API_KEY, fetchImpl) {
   const prompt = typeof message === "string" ? message.trim() : "";
-  if (!prompt || prompt.length > 2000) {
+  const photo = image && typeof image.data === "string" && image.data
+    ? image
+    : null;
+  const hasAttachment = imageAttached || Boolean(photo) || imageWarning;
+  const photoWarning = imageWarning || (imageAttached && !photo);
+  if ((!prompt && !hasAttachment) || prompt.length > 2000) {
     throw createError("Type a short description of the issue. CivicX AI cannot identify it from a photo alone.", 400, "INVALID_CHAT_INPUT");
   }
   const contents = normalizeHistory(history);
 
-  const imageState = { imageAttached: imageAttached || Boolean(image), imageWarning };
+  const imageState = { imageAttached: hasAttachment, imageWarning: photoWarning };
   const issueReply = generateCivicIssueTextResponse(prompt, imageState);
-  if (issueReply) return issueReply;
+  if (issueReply && !photo) return issueReply;
+  if (!photo && !prompt) return generateCivicTextFallbackResponse(prompt);
 
-  const parts = [{ text: redactContactDetails(prompt) }];
+  const issue = classifyCivicIssueText(prompt);
+  const text = photo
+    ? [
+      prompt ? `User's message: ${redactContactDetails(prompt)}` : "No text was provided; analyze only what is visible in the attached photo.",
+      issue ? `Text-derived category hint: ${issue.category}. Treat it as a hint and confirm or correct it using visible evidence.` : ""
+    ].filter(Boolean).join("\n")
+    : redactContactDetails(prompt);
+  const parts = [{ text }];
+  if (photo) parts.push({ inlineData: { mimeType: photo.mimeType, data: photo.data } });
   contents.push({ role: "user", parts });
   const reply = await generateText({
     apiKey,
@@ -620,6 +643,7 @@ module.exports = {
   chatWithCivicX,
   classifyCivicIssueText,
   generateCivicIssueTextResponse,
+  generateCivicTextFallbackResponse,
   generateDescription,
   generateCivicFallbackResponse,
   getStructuredPhotoAnalysis

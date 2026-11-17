@@ -233,11 +233,11 @@
       const redacted = await privacy.redactPhoto(file);
       const redactedFile = await privacy.applyManualRegions(redacted);
       const previewUrl = URL.createObjectURL(redactedFile);
-      attachment = { previewUrl };
+      attachment = { previewUrl, file: redactedFile };
       attachmentThumbnail.src = previewUrl;
       attachmentPreview.hidden = false;
       attachmentLabel.textContent = `Redacted preview ready (${redacted.faceCount} faces, ${redacted.plateCount} plates covered). Review before sending.`;
-      status.textContent = "The original photo stays on this device. CivicX sends your text only; the photo is not uploaded or analyzed.";
+      status.textContent = "The original stays on this device. Only the redacted photo may be uploaded for server privacy checks and analysis.";
     } catch (error) {
       attachmentWarning = "I couldn't read the attached photo, so the reply will be based only on your text.";
       status.textContent = `${error.message || "Photo privacy processing failed. The photo was not attached."} You can still send a text description.`;
@@ -263,20 +263,31 @@
     const typing = appendTypingBubble();
     try {
       const body = { message, history: historyBefore };
-      if (photo) body.imageAttached = true;
+      if (photoWarning) {
+        body.imageAttached = true;
+        body.imageWarning = true;
+      }
       const { data: sessionData, error: sessionError } = await window.CivicXAuth.client.auth.getSession();
       if (sessionError) throw sessionError;
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Your session expired. Sign in again to use CivicX AI.");
+      let requestBody = JSON.stringify(body);
+      const headers = { Authorization: `Bearer ${accessToken}` };
+      if (photo) {
+        const formData = new FormData();
+        formData.append("message", message);
+        formData.append("history", JSON.stringify(historyBefore));
+        formData.append("image", photo.file, "civicx-redacted-photo.jpg");
+        requestBody = formData;
+      } else {
+        headers["Content-Type"] = "application/json";
+      }
       let response;
       try {
         response = await fetch("/api/chat", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`
-          },
-          body: JSON.stringify(body)
+          headers,
+          body: requestBody
         });
       } catch {
         throw new Error("This feature needs the CIVICX server. Your message is still available in the chat.");
@@ -293,7 +304,7 @@
           `CivicX AI is temporarily unavailable (HTTP ${response.status}).`;
         throw new Error(messageText);
       }
-      const replyText = photoWarning ? `${result.reply}\n\n${photoWarning}` : result.reply;
+      const replyText = result.reply;
 
       typing.remove();
       appendMessage("assistant", replyText, { copy: true });
@@ -321,8 +332,13 @@
     if (busy || preparingPhoto) return;
     const text = String(message || "").trim();
     const photo = attachment;
-    if (!text) {
-      status.textContent = "Type a short description of the issue. CivicX AI cannot identify it from a photo alone.";
+    if (!text && !photo && !attachmentWarning) {
+      status.textContent = "Type a question or attach a photo.";
+      input.focus();
+      return;
+    }
+    if (!text && !photo) {
+      status.textContent = "The photo could not be processed. Add a short text description to continue.";
       input.focus();
       return;
     }
@@ -330,10 +346,10 @@
     const photoWarning = attachmentWarning;
     const historyBefore = chatHistory.slice();
     const historyText = photo
-      ? `${prompt}\n[Photo attached as supporting evidence; not analyzed]`
-      : photoWarning ? `${prompt}\n[Photo could not be read]` : prompt;
+      ? `${prompt}\n[Locally redacted photo attached for visual analysis]`.trim()
+      : photoWarning ? `${prompt}\n[Photo could not be analyzed]`.trim() : prompt;
     welcome.hidden = true;
-    appendMessage("user", prompt, { imageUrl: photo?.previewUrl });
+    appendMessage("user", prompt || "Please describe what is visible in this photo.", { imageUrl: photo?.previewUrl });
     await requestReply(prompt, historyBefore, photo, historyText, photoWarning);
   }
 
