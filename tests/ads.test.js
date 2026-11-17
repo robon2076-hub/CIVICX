@@ -43,7 +43,7 @@ test("site pages load the shared theme before page-specific stylesheets", () => 
   for (const file of pages) {
     const html = fs.readFileSync(path.join(root, file), "utf8");
     const stylesheets = html.match(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi) || [];
-    assert.match(stylesheets[0] || "", /href=["']\/theme\.css["']/i, `${file} must load theme.css first`);
+    assert.match(stylesheets[0] || "", /href=["']theme\.css["']/i, `${file} must load theme.css first`);
   }
 });
 
@@ -55,6 +55,6 @@ test("user-facing app pages declare only the two responsive side-rail slots", ()
     assert.match(html, /data-ad-slot="desktop-left"/);
     assert.match(html, /data-ad-slot="desktop-right"/);
     assert.doesNotMatch(html, /data-ad-slot="mobile"/);
-    assert.match(html, /href=["']\/theme\.css["']/);
+    assert.match(html, /href=["']theme\.css["']/);
   }
 });
