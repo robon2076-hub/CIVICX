@@ -56,6 +56,6 @@ const app = createApp({
   publicMapService
 });
 
-app.listen(port, "127.0.0.1", () => {
-  console.log(`CIVICX is running at http://127.0.0.1:${port}`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`CIVICX is running on port ${port}`);
 });
