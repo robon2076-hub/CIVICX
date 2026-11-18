@@ -200,26 +200,33 @@
 
   const ready = (async () => {
     try {
-      const response = await fetch("/api/public-config");
+      const onRetry = () => {
+        configurationError = "Waking up the server, please wait...";
+        notify();
+      };
+      const response = window.CivicXStartup
+        ? await window.CivicXStartup.fetchWithRetry(fetch, "/api/public-config", {}, { onRetry })
+        : await fetch("/api/public-config");
       const contentType = response.headers.get("content-type") || "";
       const config = contentType.includes("application/json")
         ? await response.json().catch(() => null)
         : null;
       if (response.status === 404 || !config) {
-        configurationError = "This feature needs the CIVICX server. Public pages and guest browsing still work.";
+        configurationError = "Could not load CivicX sign-in settings. Please refresh. If it continues, the server configuration is incomplete.";
         notify();
         return { client: null, user: null, configured: false, configurationError };
       }
       if (!response.ok) {
-        configurationError = "CIVICX sign-in is temporarily unavailable. Public pages and guest browsing still work.";
+        configurationError = "Could not load CivicX sign-in settings. Please refresh. If it continues, the server configuration is incomplete.";
         notify();
         return { client: null, user: null, configured: false, configurationError };
       }
       if (!config.supabase?.configured) {
-        configurationError = "Private tracking needs Supabase configured by the site owner.";
+        configurationError = "Supabase server configuration is incomplete. Ask the site owner to verify SUPABASE_URL and SUPABASE_ANON_KEY.";
         notify();
         return { client: null, user: null, configured: false, configurationError };
       }
+      configurationError = "";
       if (!window.supabase?.createClient) throw new Error("The Supabase sign-in client did not load.");
       client = window.supabase.createClient(config.supabase.url, config.supabase.anonKey, {
         auth: {
@@ -274,9 +281,13 @@
       }
     } catch (error) {
       configurationError = error instanceof TypeError
-        ? "This feature needs the CIVICX server. Public pages and guest browsing still work."
-        : "Private tracking could not connect. Check the Supabase setup and reload.";
-      console.error("[CivicX auth] Initialization failed", error);
+        ? "Could not load CivicX sign-in settings. Please refresh. If it continues, the server configuration is incomplete."
+        : "Could not load CivicX sign-in settings. Please refresh. If it continues, the server configuration is incomplete.";
+      console.error("[CivicX auth] Initialization failed", {
+        name: error.name || "Error",
+        code: error.code || error.status || "UNKNOWN",
+        message: error.message || "No diagnostic message"
+      });
     }
     notify();
     return {

@@ -34,6 +34,17 @@
     };
   }
 
+  function findOwnedReport(reports, userId, reference) {
+    const cleanReference = String(reference || "").trim().toUpperCase();
+    if (!Array.isArray(reports) || !userId || !cleanReference) return null;
+    return reports.find((report) => {
+      if (report.ownerId !== userId) return false;
+      const references = getReportReferences(report);
+      return [references.civicXReference, references.officialRegistration, report.id, report.registrationNumber]
+        .some((value) => String(value || "").trim().toUpperCase() === cleanReference);
+    }) || null;
+  }
+
   function toReport(row, events = []) {
     return {
       id: row.id,
@@ -149,7 +160,10 @@
         contentType: "image/jpeg",
         upsert: false
       });
-      if (photoError) throw photoError;
+      if (photoError) {
+        photoError.photoUploadFailed = true;
+        throw photoError;
+      }
     }
 
     const row = {
@@ -251,7 +265,10 @@
           contentType: "image/jpeg",
           upsert: false
         });
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          uploadError.photoUploadFailed = true;
+          throw uploadError;
+        }
         reportPhotoUploaded = true;
         communityPhotoPath = await communityService.uploadImage(client, user, photoBlob);
       }
@@ -309,6 +326,12 @@
               alreadyCreated: true
             };
           }
+          if (savedReport?.user_id === user.id) {
+            const partialSave = new Error("The report was saved, but the Community post was not saved.");
+            partialSave.reportSaved = true;
+            partialSave.communityPostSaved = false;
+            throw partialSave;
+          }
           if (savedReport?.photo_path === reportPhotoPath) reportPhotoUploaded = false;
           if (savedPost?.image_path === communityPhotoPath) communityPhotoPath = null;
         } catch (reconciliationError) {
@@ -348,7 +371,16 @@
 
   function communityCrosspostErrorMessage(error) {
     const message = String(error?.message || "");
-    let result = "The report and Community post were not saved. Check your connection and retry.";
+    if (error?.reportSaved) {
+      return "The CivicX report was saved, but the Community post was not saved. It is available in My reported issues.";
+    }
+    if (error?.photoUploadFailed) {
+      return "Photo could not be saved. Neither the report nor Community post was saved.";
+    }
+    if (isNetworkError(error)) {
+      return "Check your connection. Neither the report nor Community post could be confirmed.";
+    }
+    let result = "The report and Community post were not saved.";
     if (error?.commitStatusUnknown) {
       result = "We could not confirm whether both items were saved. Refresh your report list and the Community feed before retrying.";
     } else if (/email addresses and phone numbers|contact details/i.test(message)) {
@@ -423,22 +455,50 @@
     return counts;
   }
 
-  function saveErrorMessage(error) {
+  function isNetworkError(error) {
+    const code = String(error?.code || "").toUpperCase();
+    const name = String(error?.name || "").toLowerCase();
+    const message = String(error?.message || "").toLowerCase();
+    return error instanceof TypeError ||
+      ["NETWORK_ERROR", "ECONNRESET", "ETIMEDOUT", "ENOTFOUND"].includes(code) ||
+      name.includes("network") ||
+      /failed to fetch|fetch failed|network request failed|network error|connection (?:refused|reset)|timed out|timeout/.test(message);
+  }
+
+  function saveErrorMessage(error, context = {}) {
+    if (context.locationMissing) return "Location is required. Choose a map point before saving.";
+    if (context.cityMissing) return "City is required. Choose a registered city before saving.";
     const code = String(error?.code || "");
     const message = String(error?.message || "");
+    if (error?.photoUploadFailed || /storage|bucket|photo/i.test(message) && /upload|bucket|storage/i.test(message)) {
+      return "Photo could not be saved. The report was not saved. Remove the photo or retry after checking photo storage.";
+    }
+    if (/expired|jwt|session|auth session/i.test(`${code} ${message}`) ||
+        code === "PGRST301" || code === "401") {
+      return "Not signed in or your sign-in session expired. Sign in again, then retry.";
+    }
+    if (isNetworkError(error)) {
+      return "Check your connection. The report could not reach the database.";
+    }
     if (code === "P0001" && /jurisdiction/i.test(message)) {
-      return "The connected database is still blocking jurisdiction-tagged reports. Apply supabase/migrations/20261117110000_civicx_city_voting_authority_realtime.sql, then retry; this report was not saved.";
+      return "Database setup incomplete: the jurisdiction rule migration is not ready. This report was not saved.";
     }
     if (["42703", "PGRST204"].includes(code) && /jurisdiction_key/i.test(message)) {
-      return "The CivicX database is missing the report jurisdiction column. Apply the report-repair migration and the CivicX city/voting feature migration; this report was not saved.";
+      return "Database setup incomplete: required report columns or migrations are missing. This report was not saved.";
     }
     if (code === "23503" && /jurisdiction/i.test(`${message} ${error?.constraint || ""}`)) {
       return "The selected city is not linked to an active CivicX jurisdiction. Refresh the page and choose a registered city; this report was not saved.";
     }
     if (code === "42501") {
-      return "Supabase denied the report insert. Check the signed-in account and the civic_reports insert policy; this report was not saved.";
+      return "Database access denied. Sign in again and verify the civic_reports permissions; this report was not saved.";
     }
-    return "The report was not saved. Check your connection and retry; it has not been confirmed.";
+    if (code === "PGRST205" || code === "42P01") {
+      return "Database setup incomplete: the CivicX report table or migration is missing. This report was not saved.";
+    }
+    if (/duplicate|23505/.test(`${code} ${message}`)) {
+      return "This report reference already exists. Refresh My reported issues; no duplicate was created.";
+    }
+    return "Database error: the report could not be saved. Check the browser console for setup details.";
   }
 
   function limitDescriptionForPhotoAnalysis(description) {
@@ -452,7 +512,9 @@
     createWithCommunity,
     communityCrosspostErrorMessage,
     downloadPhoto,
+    findOwnedReport,
     getReportReferences,
+    isNetworkError,
     isCivicXReference,
     limitDescriptionForPhotoAnalysis,
     listForUser,

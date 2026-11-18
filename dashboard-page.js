@@ -6,6 +6,9 @@
     accountCaption: document.getElementById("account-caption"),
     accountName: document.getElementById("account-name"),
     reportsStatus: document.getElementById("reports-status"),
+    reportSaveReference: document.getElementById("report-save-reference"),
+    reportSaveReferenceValue: document.getElementById("report-save-reference-value"),
+    reportSaveReferenceCopy: document.getElementById("report-save-reference-copy"),
     reportsEmpty: document.getElementById("reports-empty"),
     reportsEmptyTitle: document.getElementById("reports-empty-title"),
     reportsEmptyCopy: document.getElementById("reports-empty-copy"),
@@ -24,6 +27,9 @@
     publicMapStatus: document.getElementById("public-map-status"),
     mapRegion: document.getElementById("map-region-select"),
     detectMapRegion: document.getElementById("detect-map-region"),
+    retryJurisdictionsMap: document.getElementById("retry-jurisdictions-map"),
+    retryJurisdictionsReport: document.getElementById("retry-jurisdictions-report"),
+    jurisdictionLoadStatus: document.getElementById("jurisdiction-load-status"),
     reportDialog: document.getElementById("report-dialog"),
     reportForm: document.getElementById("report-form"),
     reportError: document.getElementById("report-error"),
@@ -59,6 +65,7 @@
   let selectingLocation = false;
   let requestVersion = 0;
   let jurisdictions = [];
+  let jurisdictionLoading = false;
   let reportPhoto = null;
   let photoPreparing = false;
   let reportChannel = null;
@@ -70,7 +77,7 @@
   let communityProfileLoading = false;
   let communityProfileError = false;
   let communityCategoryChanged = false;
-  let pendingCrosspostReportId = "";
+  let pendingReportId = "";
   let savingReport = false;
   const publicMapCategoryIcons = Object.freeze({
     "Road and Infrastructure": "⌁",
@@ -547,14 +554,28 @@
   }
 
   async function loadJurisdictions() {
+    if (jurisdictionLoading) return;
+    jurisdictionLoading = true;
+    elements.retryJurisdictionsMap.disabled = true;
+    elements.retryJurisdictionsReport.disabled = true;
     try {
-      const response = await fetch("/api/jurisdictions", { cache: "no-store" });
+      const onRetry = () => {
+        elements.jurisdictionLoadStatus.textContent = "Waking up the server, please wait...";
+        elements.jurisdictionLoadStatus.hidden = false;
+        elements.mapCaption.textContent = "Waking up the server, please wait...";
+      };
+      const response = await window.CivicXStartup.fetchWithRetry(
+        fetch,
+        "/api/jurisdictions",
+        { cache: "no-store" },
+        { onRetry }
+      );
       const contentType = response.headers.get("content-type") || "";
       const payload = contentType.includes("application/json")
         ? await response.json().catch(() => null)
         : null;
       if (response.status === 404 || !contentType.includes("application/json") || !payload) {
-        const error = new Error("Registered city options need the CIVICX server.");
+        const error = new Error("Jurisdiction endpoint did not return JSON.");
         error.serverUnavailable = true;
         throw error;
       }
@@ -570,15 +591,27 @@
       populateJurisdictionSelect(elements.reportCity);
       const preferred = window.CivicXJurisdictions.defaultJurisdiction(jurisdictions);
       if (preferred) selectJurisdiction(preferred.jurisdictionKey);
+      elements.jurisdictionLoadStatus.hidden = true;
+      elements.retryJurisdictionsMap.hidden = true;
+      elements.retryJurisdictionsReport.hidden = true;
     } catch (error) {
       console.error("[CivicX dashboard] Jurisdictions could not be loaded", {
-        message: error.message || "UNKNOWN"
+        name: error.name || "Error",
+        code: error.code || error.status || "UNKNOWN",
+        message: error.message || "No diagnostic message"
       });
-      elements.mapRegion.replaceChildren(new Option("Regions unavailable", ""));
-      elements.reportCity.replaceChildren(new Option("Registered regions unavailable", ""));
-      elements.mapCaption.textContent = error.serverUnavailable || error instanceof TypeError
-        ? "Registered city selection needs the CIVICX server. You can still explore the map."
-        : "Registered city selection is unavailable. Check the CivicX database migration and server configuration.";
+      const failureMessage = "Could not load cities. Please refresh. If it continues, the server configuration is incomplete.";
+      elements.mapRegion.replaceChildren(new Option(failureMessage, ""));
+      elements.reportCity.replaceChildren(new Option(failureMessage, ""));
+      elements.jurisdictionLoadStatus.textContent = failureMessage;
+      elements.jurisdictionLoadStatus.hidden = false;
+      elements.retryJurisdictionsMap.hidden = false;
+      elements.retryJurisdictionsReport.hidden = false;
+      elements.mapCaption.textContent = failureMessage;
+    } finally {
+      jurisdictionLoading = false;
+      elements.retryJurisdictionsMap.disabled = false;
+      elements.retryJurisdictionsReport.disabled = false;
     }
   }
 
@@ -664,6 +697,34 @@
     summary.append(heading, badge);
     const history = document.createElement("div");
     history.className = "report-events";
+    const civicXReference = window.CivicXReports.getReportReferences(report).civicXReference;
+    if (civicXReference) {
+      const reference = document.createElement("p");
+      reference.className = "report-reference";
+      const label = document.createElement("span");
+      label.textContent = "CivicX reference";
+      const value = document.createElement("strong");
+      value.textContent = civicXReference;
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "tiny-copy-btn";
+      copy.textContent = "Copy";
+      copy.setAttribute("aria-label", `Copy CivicX reference ${civicXReference}`);
+      copy.addEventListener("click", async (event) => {
+        event.preventDefault();
+        try {
+          await navigator.clipboard.writeText(civicXReference);
+          copy.textContent = "Copied!";
+          window.setTimeout(() => { copy.textContent = "Copy"; }, 2000);
+        } catch {
+          copy.textContent = "Select reference";
+        }
+      });
+      const disclaimer = document.createElement("small");
+      disclaimer.textContent = "This is a CivicX reference, not an official government complaint number.";
+      reference.append(label, value, copy, disclaimer);
+      history.append(reference);
+    }
     const description = document.createElement("p");
     description.textContent = report.description;
     const timeline = document.createElement("ol");
@@ -931,6 +992,22 @@
       elements.reportError.hidden = false;
       return;
     }
+    try {
+      const sessionResult = await client.auth.getSession();
+      if (sessionResult.error) throw sessionResult.error;
+      if (!sessionResult.data?.session) {
+        const expired = new Error("Your sign-in session expired.");
+        expired.code = "PGRST301";
+        throw expired;
+      }
+    } catch (sessionError) {
+      console.error("[CivicX dashboard] Report save blocked because the session could not be verified", {
+        code: sessionError.code || "UNKNOWN"
+      });
+      elements.reportError.textContent = window.CivicXReports.saveErrorMessage(sessionError);
+      elements.reportError.hidden = false;
+      return;
+    }
     if (!window.CivicXAuth.reportsReady) {
       elements.reportError.textContent = window.CivicXAuth.reportsSetupMessage ||
         "Report storage is not ready. Your report has not been saved.";
@@ -956,8 +1033,13 @@
     const jurisdiction = selectedJurisdiction();
     const latitude = Number(elements.latitude.value);
     const longitude = Number(elements.longitude.value);
-    if (!category || !description || !location || !jurisdiction) {
-      elements.reportError.textContent = "Complete the issue type, description, location, and registered city.";
+    if (!category || !description || !location) {
+      elements.reportError.textContent = "Complete the issue type, description, and location.";
+      elements.reportError.hidden = false;
+      return;
+    }
+    if (!jurisdiction) {
+      elements.reportError.textContent = "City is required. Choose a registered city before saving.";
       elements.reportError.hidden = false;
       return;
     }
@@ -966,9 +1048,7 @@
       elements.reportError.hidden = false;
       return;
     }
-    const id = crosspostRequested
-      ? (pendingCrosspostReportId || (pendingCrosspostReportId = `CX-${crypto.randomUUID()}`))
-      : `CX-${crypto.randomUUID()}`;
+    const id = pendingReportId || (pendingReportId = `CX-${crypto.randomUUID()}`);
     const area = location.split(",")[0].trim().slice(0, 120);
     const report = {
       id,
@@ -1024,7 +1104,7 @@
       communityProfileLoading = false;
       communityProfileError = false;
       communityCategoryChanged = false;
-      pendingCrosspostReportId = "";
+      pendingReportId = "";
       updateCommunityCrosspostFields();
       if (selectionMarker) {
         selectionMarker.remove();
@@ -1037,6 +1117,17 @@
           ? "Issue reported and already posted to the Civic X Community; no duplicate was created."
           : "Issue reported and posted to the Civic X Community."
         : "Issue reported and saved to your account.";
+      elements.reportSaveReferenceValue.textContent = report.id;
+      elements.reportSaveReference.hidden = false;
+      elements.reportSaveReferenceCopy.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(report.id);
+          elements.reportSaveReferenceCopy.textContent = "Copied!";
+          window.setTimeout(() => { elements.reportSaveReferenceCopy.textContent = "Copy"; }, 2000);
+        } catch {
+          elements.reportSaveReferenceCopy.textContent = "Select reference";
+        }
+      };
       document.getElementById("my-reports").scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       console.error("[CivicX dashboard] Report was not saved", { code: error.code || "UNKNOWN", message: error.message });
@@ -1054,6 +1145,8 @@
   initializeMap();
   initializeCommunityCrosspost();
   void loadJurisdictions();
+  elements.retryJurisdictionsMap.addEventListener("click", () => void loadJurisdictions());
+  elements.retryJurisdictionsReport.addEventListener("click", () => void loadJurisdictions());
   document.querySelectorAll("[data-open-report]").forEach((button) => button.addEventListener("click", openReportDialog));
   document.getElementById("choose-pin").addEventListener("click", beginPinSelection);
   document.getElementById("use-current-location").addEventListener("click", (event) => useCurrentLocation(event.currentTarget));

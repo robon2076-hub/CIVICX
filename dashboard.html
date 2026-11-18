@@ -82,6 +82,7 @@
                 <option value="">Loading registered regions…</option>
               </select>
               <button class="map-pin-action" id="detect-map-region" type="button">Detect nearest</button>
+              <button class="map-pin-action" id="retry-jurisdictions-map" type="button" hidden>Retry</button>
             </div>
             <button class="map-pin-action" type="button" data-open-report>＋ Add a report</button>
           </div>
@@ -117,6 +118,12 @@
           <button class="action-dark compact-action" type="button" data-open-report>＋ Report an issue</button>
         </div>
         <p class="reports-status" id="reports-status" role="status" aria-live="polite">Checking your account…</p>
+        <div class="report-save-reference" id="report-save-reference" hidden>
+          <span>CivicX reference</span>
+          <strong id="report-save-reference-value"></strong>
+          <button type="button" class="tiny-copy-btn" id="report-save-reference-copy">Copy</button>
+          <small>This is a CivicX reference, not an official government complaint number.</small>
+        </div>
         <div class="reports-empty" id="reports-empty" hidden>
           <strong id="reports-empty-title">No reports to show</strong>
           <p id="reports-empty-copy">Sign in to retrieve your previous reports, or create a report to get started.</p>
@@ -155,6 +162,8 @@
         <select id="report-city" required>
           <option value="" selected disabled>Loading registered jurisdictions…</option>
         </select>
+        <p id="jurisdiction-load-status" class="report-photo-note" role="status" aria-live="polite" hidden></p>
+        <button type="button" class="action-light" id="retry-jurisdictions-report" hidden>Retry loading cities</button>
         <div class="location-picker-row">
           <button type="button" class="action-light" id="choose-pin">Choose a point on the map</button>
           <button type="button" class="action-light" id="use-current-location">Use my location</button>
@@ -244,6 +253,7 @@
     <script type="module" src="image-privacy.mjs"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="civicx-startup.js"></script>
     <script src="civicx-auth.js"></script>
     <script src="portal-navigation.js"></script>
     <script src="portal-session.js"></script>

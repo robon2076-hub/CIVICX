@@ -85,6 +85,7 @@
     });
     if (error) {
       const uploadFailure = new Error("The Community image could not be uploaded.");
+      uploadFailure.photoUploadFailed = true;
       try {
         await removeImage(client, path);
       } catch (cleanupError) {

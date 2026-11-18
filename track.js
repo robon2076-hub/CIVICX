@@ -30,22 +30,6 @@
   let currentRecord = null;
   let currentUserId = null;
 
-  // Starter demo reports as baseline database
-  const starterReports = [
-    { id: "CX-2418", category: "Pothole", title: "Deep pothole near the crossing", location: "Park Circus, Kolkata", city: "Kolkata, West Bengal, India", date: "Today, 10:42 AM", status: "In progress", priority: "High", description: "A deep pothole is slowing traffic near the crossing.", department: "Roads / Public Works" },
-    { id: "CX-2417", category: "Garbage", title: "Overflowing community bin", location: "Ballygunge Place, Kolkata", city: "Kolkata, West Bengal, India", date: "Today, 9:18 AM", status: "Verified", priority: "Medium", description: "The public bin is full and waste is collecting around it.", department: "Municipal Sanitation" },
-    { id: "CX-2416", category: "Water leakage", title: "Water leaking onto the footpath", location: "Gariahat Road, Kolkata", city: "Kolkata, West Bengal, India", date: "Today, 8:05 AM", status: "Assigned", priority: "High", description: "Water is pooling on the footpath beside the main road.", department: "Water Supply / PHE" },
-    { id: "CX-2415", category: "Streetlight", title: "Streetlight out after sunset", location: "Minto Park, Kolkata", city: "Kolkata, West Bengal, India", date: "Yesterday", status: "Submitted", priority: "Low", description: "One streetlight is not turning on after dark.", department: "Street Lighting Maintenance" },
-    { id: "CX-2414", category: "Pothole", title: "Road surface breaking up", location: "Beck Bagan, Kolkata", city: "Kolkata, West Bengal, India", date: "Yesterday", status: "Verified", priority: "Medium", description: "The road surface is crumbling and getting harder to avoid.", department: "Roads / Public Works" },
-    { id: "CX-2413", category: "Garbage", title: "Missed waste collection", location: "Bhowanipore, Kolkata", city: "Kolkata, West Bengal, India", date: "Yesterday", status: "Resolved", priority: "Medium", description: "Waste collection has been completed on this street.", department: "Municipal Sanitation" },
-    { id: "CX-2412", category: "Streetlight", title: "Dark stretch near the bus stop", location: "AJC Bose Road, Kolkata", city: "Kolkata, West Bengal, India", date: "Nov 12", status: "In progress", priority: "Medium", description: "Two lights are off near the bus stop.", department: "Street Lighting Maintenance" },
-    { id: "CX-2411", category: "Pothole", title: "Pothole widening after rain", location: "Park Circus Connector, Kolkata", city: "Kolkata, West Bengal, India", date: "Nov 12", status: "Submitted", priority: "High", description: "The pothole has become wider after the recent rain.", department: "Roads / Public Works" },
-    { id: "CX-2410", category: "Water leakage", title: "Water pipe seepage", location: "Hazra Road, Kolkata", city: "Kolkata, West Bengal, India", date: "Nov 11", status: "Resolved", priority: "Low", description: "The water pipe seepage has been repaired.", department: "Water Supply / PHE" },
-    { id: "CX-2409", category: "Garbage", title: "Litter gathering beside the market", location: "Gariahat Market, Kolkata", city: "Kolkata, West Bengal, India", date: "Nov 11", status: "Assigned", priority: "Medium", description: "Litter is accumulating beside the market entrance.", department: "Municipal Sanitation" },
-    { id: "CX-2408", category: "Pothole", title: "Uneven road near the crossing", location: "Park Circus, Kolkata", city: "Kolkata, West Bengal, India", date: "Nov 10", status: "Resolved", priority: "Medium", description: "The uneven road surface has been patched.", department: "Roads / Public Works" },
-    { id: "CX-2407", category: "Streetlight", title: "Lamp flickering on residential lane", location: "Ballygunge Circular Road, Kolkata", city: "Kolkata, West Bengal, India", date: "Nov 9", status: "Verified", priority: "Low", description: "The streetlight flickers intermittently.", department: "Street Lighting Maintenance" }
-  ];
-
   function setError(message) {
     error.textContent = message;
     error.hidden = !message;
@@ -63,36 +47,6 @@
     } catch {
       return false;
     }
-  }
-
-  function findLocalRecord(regNum) {
-    const cleanNum = String(regNum || "").trim().toUpperCase();
-    if (!cleanNum) return null;
-    const starterMatch = starterReports.find((r) =>
-      String(r.id).toUpperCase() === cleanNum
-    );
-    if (starterMatch) {
-      return {
-        id: starterMatch.id,
-        civicReport: true,
-        civicx_reference: starterMatch.id,
-        report_id: null,
-        title: starterMatch.title,
-        category: starterMatch.category,
-        location: starterMatch.location,
-        city: starterMatch.city,
-        date: starterMatch.date,
-        status: starterMatch.status,
-        priority: starterMatch.priority,
-        description: starterMatch.description,
-        department: starterMatch.department,
-        portal: "CPGRAMS",
-        portal_status: starterMatch.status,
-        is_resolved: starterMatch.status === "Resolved"
-      };
-    }
-
-    return null;
   }
 
   function isResolvedStatus(status) {
@@ -127,8 +81,8 @@
         <div class="track-resolution-banner is-not-found">
           <span class="resolution-icon">❓</span>
           <div>
-            <strong class="resolution-title">Registration Number Not Found</strong>
-            <p>No account report or saved reference currently matches <strong>${cleanNum}</strong>.</p>
+            <strong class="resolution-title">Report Reference Not Found in Your Account</strong>
+            <p>No report or saved official reference in your signed-in account matches <strong>${cleanNum}</strong>.</p>
           </div>
         </div>
         <div class="track-details-grid">
@@ -137,25 +91,13 @@
             <strong>${cleanNum}</strong>
           </div>
           <div class="track-detail-item">
-            <span>Official tracking available</span>
-            <strong>CPGRAMS Government Portal (pgportal.gov.in)</strong>
+            <span>Privacy</span>
+            <strong>Other accounts' reports are never displayed.</strong>
           </div>
         </div>
-        <div class="track-result-help">
-          <p>If this is an official CPGRAMS registration number issued by the Government of India, you can track it directly on the government portal:</p>
-          <div class="track-actions-row">
-            <a class="button button-primary" href="https://pgportal.gov.in/Status" target="_blank" rel="noopener noreferrer">
-              Check Live Status on CPGRAMS ↗
-            </a>
-            <button class="button button-secondary" type="button" id="record-external-ref-btn">Record this reference in my account</button>
-          </div>
-        </div>
+        <p class="track-status-note">A CivicX reference is not an official government complaint number.</p>
       `;
       result.hidden = false;
-      document.getElementById("record-external-ref-btn").addEventListener("click", () => {
-        saveForm.hidden = false;
-        fields.status.focus();
-      });
       return;
     }
 
@@ -215,7 +157,7 @@
     const { civicXReference, officialRegistration } = window.CivicXReports.getReportReferences(record);
     const referenceMarkup = civicXReference
       ? `<div class="track-detail-item">
-          <span>CivicX report reference</span>
+          <span>CivicX report reference — not an official government complaint number</span>
           <div class="copyable-reg">
             <strong>${escapeHtml(civicXReference)}</strong>
             <button type="button" class="tiny-copy-btn" id="copy-reg-btn" title="Copy CivicX reference">Copy</button>
@@ -346,12 +288,14 @@
       await window.CivicXAuth?.ready;
       const client = window.CivicXAuth?.client;
       const user = window.CivicXAuth?.user;
+      if (!client || !user) {
+        setError("Sign in to track your own CivicX reports. Private report references are never available to guests.");
+        document.querySelector("[data-civicx-auth-trigger]")?.click();
+        return;
+      }
       if (client && user) {
         const accountReports = await window.CivicXReports.listForUser(client, user.id);
-        const matchedReport = accountReports.find((report) =>
-          [report.id, report.registrationNumber, report.officialRegistration]
-            .some((value) => String(value || "").toUpperCase() === cleanNum.toUpperCase())
-        );
+        const matchedReport = window.CivicXReports.findOwnedReport(accountReports, user.id, cleanNum);
         if (matchedReport) {
           currentRecord = {
             id: matchedReport.id,
@@ -412,14 +356,7 @@
       return;
     }
 
-    const localMatch = findLocalRecord(cleanNum);
-    if (localMatch) {
-      currentRecord = localMatch;
-      showResult(localMatch, cleanNum);
-      return;
-    }
-
-    // Not found anywhere
+    // The result is intentionally account-scoped; guest/demo records are never returned.
     currentRecord = null;
     showResult(null, cleanNum);
   }
@@ -433,14 +370,6 @@
       return;
     }
     await findRecord(registrationNumber);
-  });
-
-  // Handle quick sample chips
-  document.querySelectorAll("[data-sample]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      registrationInput.value = btn.dataset.sample;
-      findRecord(btn.dataset.sample);
-    });
   });
 
   // Handle saving status update

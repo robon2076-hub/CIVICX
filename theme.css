@@ -131,6 +131,30 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .btn--success { border-color: transparent; background: var(--status-ok); color: var(--dark-text); }
 .btn--danger { border-color: transparent; background: var(--status-bad); color: var(--dark-text); }
 .btn--pulse { animation: cx-button-pulse 2.4s ease-in-out infinite; }
+.report-save-reference,
+.report-reference {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  margin: 10px 0;
+  padding: 9px 11px;
+  border: 1px solid #dbe7dd;
+  border-radius: 8px;
+  background: #f7fbf8;
+  color: #2f4336;
+  font-size: 11px;
+}
+.report-save-reference[hidden] { display: none; }
+.report-save-reference span,
+.report-reference span { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.report-save-reference small,
+.report-reference small {
+  grid-column: 1 / -1;
+  color: #6f7e73;
+  font-size: 9.5px;
+}
 
 .metric-card, .shortcut-card, .dashboard-map-card, .dashboard-summary, .report-item, .portal-key-panel,
 .portal-owner-settings, .portal-owner-reports, .portal-report, .environment-metric, .environment-panel,
@@ -357,13 +381,13 @@ input:focus, textarea:focus, select:focus { border-color: #f5b800; outline-color
 .cx-home-video-controls .video-time { color: #c8cddd; }
 .cx-home-video-controls .video-control-button { border-radius: 999px; }
 .cx-home-video-controls .video-progress { accent-color: #f5b800; }
-.cx-home-section { width: min(1220px, calc(100% - 48px)); max-width: none; padding: clamp(60px, 8vw, 98px) 0; scroll-margin-top: 82px; }
-.cx-home-section-heading { max-width: 780px; margin-bottom: 28px; }
+.cx-home-section { width: min(1220px, calc(100% - 48px)); max-width: none; margin-inline: auto; padding: clamp(60px, 8vw, 98px) 0; scroll-margin-top: 82px; }
+.cx-home-section-heading { max-width: 780px; margin: 0 auto 28px; text-align: center; }
 .cx-home-section-heading .eyebrow { color: #947000; }
 .cx-home-section-heading h2 { margin: 0; color: #12151f; font-size: clamp(30px, 4vw, 48px); letter-spacing: -.055em; }
 .cx-home-section-heading > p:last-child { max-width: 680px; margin: 12px 0 0; color: #5b6479; font-size: 14px; line-height: 1.7; }
 .cx-tutorial-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(270px, .8fr); gap: 20px; }
-.cx-tutorial-stage { position: relative; display: flex; min-height: 405px; align-items: center; gap: 34px; overflow: hidden; border: 1px solid #e1e4ed; border-radius: 28px; background: linear-gradient(135deg, #fff2c4, #d9e9ff 60%, #def5e9); padding: 30px; color: #10141d; }
+.cx-tutorial-stage { position: relative; display: flex; min-height: 405px; align-items: center; justify-content: center; gap: 34px; overflow: hidden; border: 1px solid #e1e4ed; border-radius: 28px; background: linear-gradient(135deg, #fff2c4, #d9e9ff 60%, #def5e9); padding: 30px; color: #10141d; text-align: center; }
 .cx-tutorial-stage::before { position: absolute; top: -130px; right: -80px; width: 390px; height: 390px; border-radius: 50%; background: radial-gradient(#fff9, transparent 70%); content: ""; animation: cx-glow-float 10s ease-in-out infinite alternate; }
 .cx-tutorial-phone { position: relative; z-index: 1; display: flex; width: 204px; min-height: 335px; flex: 0 0 204px; flex-direction: column; align-items: center; border: 8px solid #10141d; border-radius: 34px; background: #fff; padding: 14px; text-align: center; box-shadow: 0 24px 50px rgb(0 0 0 / 23%); }
 .cx-tutorial-phone::before { width: 58px; height: 6px; margin-bottom: 18px; border-radius: 3px; background: #dfe3ea; content: ""; }
@@ -379,15 +403,15 @@ input:focus, textarea:focus, select:focus { border-color: #f5b800; outline-color
 .cx-tutorial-progress { position: absolute; right: 0; bottom: 0; left: 0; height: 5px; background: rgb(16 20 29 / 12%); }
 .cx-tutorial-progress span { display: block; width: 0; height: 100%; background: #10141d; }
 .cx-tutorial-list { display: flex; flex-direction: column; gap: 10px; }
-.cx-tutorial-item { display: flex; min-height: 58px; align-items: center; gap: 13px; border: 1px solid #dde2ee; border-radius: 18px; background: #fff; padding: 12px 15px; color: #12151f; text-align: left; cursor: pointer; transition: .25s ease; }
+.cx-tutorial-item { display: flex; min-height: 58px; align-items: center; justify-content: center; gap: 13px; border: 1px solid #dde2ee; border-radius: 18px; background: #fff; padding: 12px 15px; color: #12151f; text-align: center; cursor: pointer; transition: .25s ease; }
 .cx-tutorial-item:hover { transform: translateX(5px); border-color: #f5b800; }
 .cx-tutorial-item.is-active { border-color: #f5b800; background: #fff8df; }
 .cx-tutorial-item-icon { width: 34px; flex: 0 0 auto; font-size: 23px; text-align: center; }
-.cx-tutorial-item-copy { display: grid; gap: 3px; }
+.cx-tutorial-item-copy { display: grid; gap: 3px; text-align: center; }
 .cx-tutorial-item-copy strong { font-size: 11px; }
 .cx-tutorial-item-copy small { color: #687187; font-size: 9px; line-height: 1.4; }
 .cx-explore-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.cx-explore-card { position: relative; display: flex; min-height: 260px; flex-direction: column; justify-content: flex-end; overflow: hidden; border: 1px solid rgb(255 255 255 / 14%); border-radius: 24px; padding: 22px; color: #eef1f7; text-decoration: none; transition: transform .3s ease, box-shadow .3s ease; }
+.cx-explore-card { position: relative; display: flex; min-height: 260px; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 1px solid rgb(255 255 255 / 14%); border-radius: 24px; padding: 22px; color: #eef1f7; text-align: center; text-decoration: none; transition: transform .3s ease, box-shadow .3s ease; }
 .cx-explore-card:hover { box-shadow: 0 18px 36px rgb(10 15 25 / 22%); transform: translateY(-7px); }
 .cx-explore-card::before { position: absolute; top: -60px; right: -60px; width: 210px; height: 210px; border-radius: 50%; background: rgb(255 255 255 / 12%); content: ""; }
 .cx-explore-card > span { position: relative; z-index: 1; margin-bottom: auto; font-size: 38px; }
@@ -530,9 +554,9 @@ input:focus, textarea:focus, select:focus { border-color: #f5b800; outline-color
   .cx-home-video-controls .video-time { font-size: 8px; }
   .cx-home-video-controls .video-control-button { min-width: 27px; padding: 0 5px; }
   .cx-home-section { width: calc(100% - 32px); padding: 46px 0; }
-  .cx-tutorial-stage { min-height: 0; flex-direction: column; align-items: stretch; gap: 20px; padding: 24px; }
+  .cx-tutorial-stage { min-height: 0; flex-direction: column; align-items: center; gap: 20px; padding: 24px; }
   .cx-tutorial-phone { width: min(204px, 100%); min-height: 310px; align-self: center; }
-  .cx-tutorial-copy { padding-right: 35px; }
+  .cx-tutorial-copy { padding-right: 0; text-align: center; }
   .cx-tutorial-list { gap: 7px; }
   .cx-explore-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .cx-explore-card { min-height: 190px; padding: 15px; }

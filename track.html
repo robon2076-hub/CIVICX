@@ -24,33 +24,22 @@
         </div>
       </header>
       <section class="track-card">
-        <p class="eyebrow"><span class="eyebrow-dot"></span> COMPLAINT & RESOLUTION TRACKER</p>
-        <h1>Track your complaint<span class="heading-period">.</span></h1>
-        <p>Look up any CivicX registration number (e.g. <strong>CX-2418</strong>) or official CPGRAMS portal reference to see whether the issue has been resolved or is in progress, along with direct options to track on the official government portal.</p>
-        
-        <div class="track-samples-bar" id="track-samples-bar">
-          <span class="track-samples-label">Quick sample checks:</span>
-          <div class="track-chips">
-            <button type="button" class="track-chip" data-sample="CX-2418">CX-2418 <small>(In progress)</small></button>
-            <button type="button" class="track-chip" data-sample="CX-2410">CX-2410 <small>(Resolved)</small></button>
-            <button type="button" class="track-chip" data-sample="CX-2413">CX-2413 <small>(Resolved)</small></button>
-            <button type="button" class="track-chip" data-sample="CX-2416">CX-2416 <small>(Assigned)</small></button>
-            <button type="button" class="track-chip" data-sample="CX-2415">CX-2415 <small>(Submitted)</small></button>
-          </div>
-        </div>
+        <p class="eyebrow"><span class="eyebrow-dot"></span> PRIVATE REPORT TRACKER</p>
+        <h1>Track report<span class="heading-period">.</span></h1>
+        <p>Enter a CivicX reference or an official CPGRAMS reference linked to a report in your signed-in account. CivicX references are not official government complaint numbers.</p>
 
         <div class="track-account-panel">
           <span class="track-account-mark" aria-hidden="true">◎</span>
-          <p data-civicx-auth-status>Sign in to retrieve private CivicX reports and tracking records across devices.</p>
+          <p data-civicx-auth-status>Sign in to retrieve only your own private reports and tracking history.</p>
         </div>
 
         <form class="track-form" id="track-form">
-          <label class="field-label" for="track-registration">CivicX Registration Number or CPGRAMS Reference</label>
+          <label class="field-label" for="track-registration">CivicX reference or your official CPGRAMS reference</label>
           <div class="track-input-row">
-            <input id="track-registration" maxlength="80" autocomplete="off" required placeholder="Enter number (e.g. CX-2418 or CPGRAMS reference)" />
-            <button class="button button-primary" type="submit">Track complaint</button>
+            <input id="track-registration" maxlength="80" autocomplete="off" required placeholder="Enter your report reference" />
+            <button class="button button-primary" type="submit">Track report</button>
           </div>
-          <p class="privacy-note">All reports submitted in CivicX are automatically registered and searchable. No sign-in required to track.</p>
+          <p class="privacy-note">Sign-in is required. Only reports and tracking records belonging to your account can be shown.</p>
         </form>
 
         <p class="track-error" id="track-error" role="alert" hidden></p>

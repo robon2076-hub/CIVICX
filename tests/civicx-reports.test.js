@@ -131,6 +131,30 @@ test("CivicX references are distinguishable from official CPGRAMS references", (
   assert.equal(civicReports.isCivicXReference("2026/11/1234"), false);
 });
 
+test("report reference lookup is restricted to the signed-in report owner", () => {
+  const reports = [{
+    id: "CX-8f97e0ca-5275-4db4-b6ec-b924efa96cda",
+    ownerId: "account-1",
+    registrationNumber: "CX-8f97e0ca-5275-4db4-b6ec-b924efa96cda",
+    officialRegistration: null
+  }, {
+    id: "CX-other-report",
+    ownerId: "account-2",
+    registrationNumber: "CX-other-report",
+    officialRegistration: null
+  }];
+
+  assert.equal(
+    civicReports.findOwnedReport(reports, "account-1", "CX-8f97e0ca-5275-4db4-b6ec-b924efa96cda")?.id,
+    "CX-8f97e0ca-5275-4db4-b6ec-b924efa96cda"
+  );
+  assert.equal(
+    civicReports.findOwnedReport(reports, "account-1", "CX-other-report"),
+    null
+  );
+  assert.equal(civicReports.findOwnedReport(reports, null, "CX-8f97e0ca-5275-4db4-b6ec-b924efa96cda"), null);
+});
+
 test("tracker reference formatting never presents a CivicX ID as an official CPGRAMS number", () => {
   assert.deepEqual(
     civicReports.getReportReferences({ id: "CX-2418" }),
@@ -211,18 +235,27 @@ test("dashboard status summary recognizes the explicit pending authority status"
   assert.equal(counts.pending, 1);
 });
 
-test("report-save errors identify the unapplied jurisdiction trigger migration", () => {
+test("report-save errors identify database setup problems", () => {
   assert.match(
     civicReports.saveErrorMessage({
       code: "P0001",
       message: "Report jurisdiction must be assigned through a trusted administrative workflow."
     }),
-    /20261117110000_civicx_city_voting_authority_realtime\.sql/
+    /Database setup incomplete/
   );
   assert.match(
     civicReports.saveErrorMessage({ code: "42501", message: "new row violates row-level security policy" }),
-    /civic_reports insert policy/
+    /Database access denied/
   );
+});
+
+test("report-save errors distinguish database, session, location, photo, and network failures", () => {
+  assert.match(civicReports.saveErrorMessage({ code: "PGRST205", message: "table not found" }), /Database setup incomplete/);
+  assert.match(civicReports.saveErrorMessage({ code: "PGRST301", message: "JWT expired" }), /session expired|Not signed in/);
+  assert.match(civicReports.saveErrorMessage(new TypeError("Failed to fetch")), /Check your connection/);
+  assert.match(civicReports.saveErrorMessage({ photoUploadFailed: true, code: "42501" }), /Photo could not be saved/);
+  assert.match(civicReports.saveErrorMessage({}, { locationMissing: true }), /Location is required/);
+  assert.match(civicReports.saveErrorMessage({}, { cityMissing: true }), /City is required/);
 });
 
 test("photo analysis receives a bounded description context accepted by the AI endpoint", () => {

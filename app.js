@@ -541,7 +541,9 @@ async function createReport(event) {
     updateMyReportsStatus(`Your reports are stored in the account database (${reports.filter((report) => report.isMine).length} saved).`);
   } catch (error) {
     console.error("[CivicX reports] Report could not be saved", { code: error.code || "UNKNOWN", message: error.message });
-    elements.formError.textContent = "The report was not saved. Check your connection and account, then retry. Your report has not been confirmed.";
+    elements.formError.textContent = window.CivicXReports?.saveErrorMessage
+      ? window.CivicXReports.saveErrorMessage(error)
+      : "The report could not be saved.";
     elements.formError.hidden = false;
     submitButton.disabled = false;
     return;
